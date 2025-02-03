@@ -1,0 +1,3 @@
+psql -h jeopardyze.xyz -U mental -d jeopardyze
+
+ssh ubuntu@jeopardyze.xyz -i "~/keys/MM-aws-masterkey.pem" 
