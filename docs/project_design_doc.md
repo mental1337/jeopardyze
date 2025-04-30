@@ -198,8 +198,19 @@ graph TD
 POST /api/game-sessions
 ↓ (Success)
 /play/:id
-↓ (Answer questions)
+↓ (Fetch all questions)
+GET /api/quiz-boards/:id/questions
+↓ (Display game board with hidden questions)
+/play/:id
+↓ (Select question card)
+↓ (Display question modal with answer input)
+↓ (Submit answer)
+POST /api/game-sessions/:id/questions/:question_id/answer
+↓ (Backend validates answer using LLM)
 PUT /api/game-sessions/:id/score
+↓ (Update UI with answer result)
+↓ (Return to game board)
+↓ (Repeat for each question)
 ↓ (Game complete)
 /profile
 ```
@@ -242,12 +253,18 @@ POST /api/users/login or /api/users/register
 - View previous scores
 
 #### Play Page (/play/:id)
-- Quiz board grid
+- Quiz board grid with:
+  - Category headers
+  - Question cards (initially showing point values)
+  - Click handlers for each card
 - Score display
-- Question modal
-- Answer input
-- Timer (optional)
+- Question modal with:
+  - Question display
+  - Answer input box
+  - Submit button
+  - Feedback on answer correctness
 - Game progress indicator
+- Return to board button
 
 #### Profile Page (/profile)
 - User information
