@@ -193,26 +193,26 @@ graph TD
 
 #### Game Play Flow
 ```
-/quiz-board/:id
+/quiz-board/:quizBoardId
 ↓ (Start game)
 POST /api/game-sessions
-↓ (Success)
-/play/:id
-↓ (Fetch all questions)
-GET /api/quiz-boards/:id/questions
+↓ (Success - returns gameSessionId)
+/play/:gameSessionId
+↓ (Fetch all questions for the quiz board)
+GET /api/quiz-boards/:quizBoardId/questions
 ↓ (Display game board with hidden questions)
-/play/:id
+/play/:gameSessionId
 ↓ (Select question card)
 ↓ (Display question modal with answer input)
 ↓ (Submit answer)
-POST /api/game-sessions/:id/questions/:question_id/answer
-↓ (Backend validates answer using LLM)
-PUT /api/game-sessions/:id/score
-↓ (Update UI with answer result)
+POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
+↓ (Backend validates answer using LLM and updates score)
+↓ (Return response with validation result and updated score)
+↓ (Update UI with answer result and new score)
 ↓ (Return to game board)
 ↓ (Repeat for each question)
-↓ (Game complete)
-/profile
+↓ (Game complete - show completion modal)
+/play/:gameSessionId
 ```
 
 #### User Authentication Flow
@@ -252,18 +252,23 @@ POST /api/users/login or /api/users/register
 - Share button
 - View previous scores
 
-#### Play Page (/play/:id)
+#### Play Page (/play/:gameSessionId)
 - Quiz board grid with:
   - Category headers
   - Question cards (initially showing point values)
   - Click handlers for each card
-- Score display
+- Score display (updated after each answer)
 - Question modal with:
   - Question display
   - Answer input box
   - Submit button
   - Feedback on answer correctness
 - Game progress indicator
+- Game completion modal (shown when all questions are answered) with:
+  - Final score display
+  - Share results button
+  - Play again button
+  - Return to home button
 - Return to board button
 
 #### Profile Page (/profile)
@@ -275,11 +280,11 @@ POST /api/users/login or /api/users/register
 ### 5.4 Navigation Structure
 ```mermaid
 graph TD
-    Home[/] --> Upload[/upload]
-    Home --> Create[/create]
-    Home --> Profile[/profile]
-    Home --> QuizBoard[/quiz-board/:id]
-    QuizBoard --> Play[/play/:id]
+    Home[Home] --> Upload[Upload]
+    Home --> Create[Create]
+    Home --> Profile[Profile]
+    Home --> QuizBoard[Quiz Board]
+    QuizBoard --> Play[Play]
     Play --> Profile
     Upload --> QuizBoard
     Create --> QuizBoard
