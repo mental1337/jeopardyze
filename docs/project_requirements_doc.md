@@ -28,3 +28,9 @@ A website / webapp to create a jeopardy-style quiz using LLMs on any given topic
 
 Backend: Python, FastAPI, PostgreSQL database, Langchain
 Frontend: React
+
+
+## More features to consider
+- Teams score keeping?
+- Replay a quizboard?
+- Private or public quizboard - esp for from-document

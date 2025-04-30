@@ -188,6 +188,17 @@ graph TD
     App --> GameSessionPage
     App --> AuthPage
     
+    Navbar --> Logo
+    Navbar --> AuthButton
+    Navbar --> UserMenu
+    
+    AuthButton --> LoginButton
+    AuthButton --> RegisterButton
+    
+    UserMenu --> Username
+    UserMenu --> ProfileLink
+    UserMenu --> LogoutButton
+    
     HomePage --> CreateFromTopic
     HomePage --> CreateFromDocument
     HomePage --> QuizBoardList
@@ -209,22 +220,31 @@ graph TD
 ```
 
 ### 4.2 Key Components
-1. QuizBoardList
+1. Navbar
+   - Logo (links to home)
+   - Authentication section:
+     - Login/Register buttons (when not logged in)
+     - Username display and dropdown menu (when logged in)
+       - Profile link
+       - Logout button
+   - Responsive design for mobile
+
+2. QuizBoardList
    - Displays available quiz boards
    - Shows top scores
    - Search functionality
 
-2. QuizGrid
+3. QuizGrid
    - N x M grid display
    - Category headers
    - Question cards with point values
 
-3. QuestionCard
+4. QuestionCard
    - Question display
    - Answer input
    - Point value display
 
-4. ScoreDisplay
+5. ScoreDisplay
    - Current score
    - Game progress
 
