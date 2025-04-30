@@ -122,9 +122,36 @@ erDiagram
 - `GET /api/game-sessions/{id}`
   - Get game session details including:
     - Current score
-    - Question states
+    - Question states (unattempted/attempted/correct/wrong)
     - Attempted answers
     - Game status
+    - Game progress
+  - Response format:
+    ```json
+    {
+        "gameSessionId": "string",
+        "quizBoardId": "string",
+        "totalScore": integer,
+        "status": "in_progress",
+        "questions": [
+            {
+                "questionId": "string",
+                "category": "string",
+                "points": integer,
+                "status": "unattempted",
+                "userAnswer": null,
+                "isCorrect": null,
+                "pointsEarned": 0
+            }
+        ],
+        "progress": {
+            "totalQuestions": integer,
+            "attemptedQuestions": integer,
+            "correctAnswers": integer,
+            "wrongAnswers": integer
+        }
+    }
+    ```
 
 - `POST /api/game-sessions/{id}/questions/{questionId}/answer`
   - Submit answer for a question
@@ -144,13 +171,6 @@ erDiagram
         "game_status": "string"
     }
     ```
-
-- `GET /api/game-sessions/{id}/state`
-  - Get current game state including:
-    - Question states (unattempted/attempted/correct/wrong)
-    - Attempted answers
-    - Current score
-    - Game progress
 
 #### User Management
 - `POST /api/users/register`
