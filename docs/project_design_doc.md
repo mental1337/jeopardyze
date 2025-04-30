@@ -41,6 +41,7 @@ erDiagram
     Category ||--o{ Question : contains
     QuizBoard ||--o{ GameSession : played_in
     User ||--o{ GameSession : plays
+    GameSession ||--o{ QuestionAttempt : tracks
 
     QuizBoard {
         int id PK
@@ -68,8 +69,21 @@ erDiagram
         int id PK
         int quiz_board_id FK
         int user_id FK
-        int score
-        datetime played_at
+        int total_score
+        datetime started_at
+        datetime completed_at
+        string status
+    }
+
+    QuestionAttempt {
+        int id PK
+        int game_session_id FK
+        int question_id FK
+        string user_answer
+        boolean is_correct
+        int points_earned
+        datetime attempted_at
+        string status
     }
 
     User {
@@ -103,13 +117,40 @@ erDiagram
 #### Game Session
 - `POST /api/game-sessions`
   - Start new game session
-  - Returns session ID
+  - Returns session ID and initial state
 
-- `PUT /api/game-sessions/{id}/score`
-  - Update score for session
+- `GET /api/game-sessions/{id}`
+  - Get game session details including:
+    - Current score
+    - Question states
+    - Attempted answers
+    - Game status
 
-- `GET /api/game-sessions`
-  - List user's game sessions
+- `POST /api/game-sessions/{id}/questions/{questionId}/answer`
+  - Submit answer for a question
+  - Request body:
+    ```json
+    {
+        "answer": "string"
+    }
+    ```
+  - Response:
+    ```json
+    {
+        "is_correct": boolean,
+        "points_earned": integer,
+        "correct_answer": "string",
+        "updated_score": integer,
+        "game_status": "string"
+    }
+    ```
+
+- `GET /api/game-sessions/{id}/state`
+  - Get current game state including:
+    - Question states (unattempted/attempted/correct/wrong)
+    - Attempted answers
+    - Current score
+    - Game progress
 
 #### User Management
 - `POST /api/users/register`
@@ -125,15 +166,26 @@ graph TD
     App --> HomePage
     App --> QuizBoardPage
     App --> GameSessionPage
+    App --> AuthPage
     
-    HomePage --> SearchBar
+    HomePage --> CreateFromTopic
+    HomePage --> CreateFromDocument
     HomePage --> QuizBoardList
+    
+    CreateFromTopic --> FormInput
+    CreateFromDocument --> FileUpload
+    CreateFromDocument --> TextInput
     
     QuizBoardPage --> QuizGrid
     QuizGrid --> QuestionCard
     
     GameSessionPage --> ScoreDisplay
     GameSessionPage --> QuizGrid
+    
+    AuthPage --> LoginForm
+    AuthPage --> RegisterForm
+    LoginForm --> FormInput
+    RegisterForm --> FormInput
 ```
 
 ### 4.2 Key Components
@@ -160,9 +212,7 @@ graph TD
 
 ### 5.1 URL Patterns
 ```
-/                   # Home page - List of available quiz boards
-/upload             # Document upload page
-/create             # Topic-based quiz creation page
+/                   # Home page - Create quiz boards and list existing ones
 /quiz-board/:id     # View a specific quiz board
 /play/:id          # Play a specific quiz board
 /profile           # User profile and game history
@@ -175,8 +225,8 @@ graph TD
 #### Quiz Board Creation Flow
 1. Document-based Creation:
    ```
-   /upload
-   ↓ (Upload document)
+   / (Home page)
+   ↓ (Upload document or paste content)
    POST /api/quiz-boards/from-document
    ↓ (Success)
    /quiz-board/:id
@@ -184,7 +234,7 @@ graph TD
 
 2. Topic-based Creation:
    ```
-   /create
+   / (Home page)
    ↓ (Enter topic)
    POST /api/quiz-boards/from-topic
    ↓ (Success)
@@ -227,22 +277,17 @@ POST /api/users/login or /api/users/register
 ### 5.3 Page Components and Features
 
 #### Home Page (/)
-- Search bar for quiz boards
-- List of available quiz boards
-- Top scores display
-- Quick access to create/upload
-
-#### Upload Page (/upload)
-- Document upload interface
-- Text input area for pasting content
-- Progress indicator for generation
-- Error handling for invalid inputs
-
-#### Create Page (/create)
-- Topic input field
-- Description input (optional)
-- Generation progress indicator
-- Error handling for invalid inputs
+- Create Game section with:
+  - Topic input form
+  - Document upload interface
+  - Text input area for pasting content
+  - Progress indicators for generation
+  - Error handling for invalid inputs
+- Existing Games section with:
+  - Search bar for quiz boards
+  - List of available quiz boards
+  - Top scores display
+  - Quick access to play games
 
 #### Quiz Board Page (/quiz-board/:id)
 - Quiz board grid display
@@ -280,21 +325,58 @@ POST /api/users/login or /api/users/register
 ### 5.4 Navigation Structure
 ```mermaid
 graph TD
-    Home[Home] --> Upload[Upload]
-    Home --> Create[Create]
-    Home --> Profile[Profile]
+    Home[Home] --> Profile[Profile]
     Home --> QuizBoard[Quiz Board]
     QuizBoard --> Play[Play]
     Play --> Profile
-    Upload --> QuizBoard
-    Create --> QuizBoard
 ```
 
 ### 5.5 State Management
 - Quiz board data
-- Game session state
+- Game session state:
+  - Question states (unattempted/attempted/correct/wrong)
+  - Attempted answers
+  - Current score
+  - Game progress
+  - Game status (in_progress/completed)
 - User authentication state
 - UI state (modals, loading states)
+
+#### Game Session State Example
+```json
+{
+    "gameSessionId": "string",
+    "quizBoardId": "string",
+    "totalScore": integer,
+    "status": "in_progress",
+    "questions": [
+        {
+            "questionId": "string",
+            "category": "string",
+            "points": integer,
+            "status": "unattempted",
+            "userAnswer": null,
+            "isCorrect": null,
+            "pointsEarned": 0
+        },
+        {
+            "questionId": "string",
+            "category": "string",
+            "points": integer,
+            "status": "correct",
+            "userAnswer": "string",
+            "isCorrect": true,
+            "pointsEarned": integer
+        }
+    ],
+    "progress": {
+        "totalQuestions": integer,
+        "attemptedQuestions": integer,
+        "correctAnswers": integer,
+        "wrongAnswers": integer
+    }
+}
+```
 
 ## 6. LLM Integration
 
