@@ -12,6 +12,8 @@ def create_tables():
     print("Creating tables")
     Base.metadata.create_all(bind=engine)
     print("Tables created")
+
+    
 def get_db():
     db_session = Session()
     try:
