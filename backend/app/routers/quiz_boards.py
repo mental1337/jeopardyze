@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.llm_service import LLMService
-from backend.app.models.category import Category
-from backend.app.models.question import Question
-from backend.app.models.quiz_board import QuizBoard
+from app.models.category import Category
+from app.models.question import Question
+from app.models.quiz_board import QuizBoard
 from pydantic import BaseModel
 from datetime import datetime
 
