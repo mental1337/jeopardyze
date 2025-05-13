@@ -15,9 +15,6 @@ const Home = () => {
 
                     <Navbar />
 
-                    {/* First section - Document upload */}
-                    <CreateFromUpload />
-
                     {/* Second section - Topic description */}
                     <CreateFromText />
 

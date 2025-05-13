@@ -3,7 +3,7 @@ import {  Box, Heading, Text, Button } from '@chakra-ui/react'
 export default function CreateFromText() {
     return (
         <Box p={4} bg="gray.100" borderRadius="md">
-            <Heading size="md" mb={2}>Or, create a Jeopardy quiz from any topic or description</Heading>
+            <Heading size="md" mb={2}>Create a Jeopardy quiz from any topic or description</Heading>
             <Box 
             as="textarea"
             p={2}
