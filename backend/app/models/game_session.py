@@ -16,4 +16,5 @@ class GameSession(MyBaseModel):
     # Relationships
     quiz_board = relationship("QuizBoard", back_populates="game_sessions")
     user = relationship("User", back_populates="game_sessions")
+    question_attempts = relationship("QuestionAttempt", back_populates="game_session")
     

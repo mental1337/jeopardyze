@@ -1,0 +1,8 @@
+2025-05-15 13:10:22,087 - jeopardyze - INFO - Generating quiz board for topic: Marvel Cinematic Universe
+2025-05-15 14:08:19,805 - jeopardyze - INFO - Generating quiz board for topic: Marvel Cinematic Universe
+2025-05-15 14:08:36,062 - jeopardyze - INFO - Adding quiz board to the database
+2025-05-15 14:08:36,065 - jeopardyze - ERROR - Failed to add quiz board to database: 'answer' is an invalid keyword argument for Question
+2025-05-15 14:36:17,622 - jeopardyze - INFO - Generating quiz board for topic: Marvel Cinematic Universe
+2025-05-15 14:36:30,703 - jeopardyze - INFO - Adding quiz board to the database
+2025-05-15 14:36:30,714 - jeopardyze - INFO - Successfully created quiz board and game session. Quiz Board ID: 1, Game Session ID: 1
+2025-05-15 14:42:16,554 - jeopardyze - INFO - Quiz board already exists for topic: Marvel Cinematic Universe, returning existing quiz board

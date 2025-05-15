@@ -12,5 +12,5 @@ class Question(MyBaseModel):
 
     # Relationships
     category = relationship("Category", back_populates="questions")
-    
+    question_attempts = relationship("QuestionAttempt", back_populates="question")
     

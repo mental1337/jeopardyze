@@ -11,6 +11,7 @@ from app.models.game_session import GameSession
 from app.core.logging import logger
 from pydantic import BaseModel
 from datetime import datetime
+from app.models.user import User
 
 router = APIRouter(
     prefix="/api/quiz-boards",
@@ -20,7 +21,7 @@ router = APIRouter(
 class QuestionPydanticModel(BaseModel):
     id: int
     question_text: str
-    answer: str
+    answer_text: str
     points: int
 
 class CategoryPydanticModel(BaseModel):
@@ -60,7 +61,7 @@ async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] =
 async def create_quiz_board_from_topic(
     topic: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Dict:
     # Check if the same topic already exists in the database
     existing_quiz_board = db.query(QuizBoard).filter(QuizBoard.source_content == topic).first()
@@ -139,7 +140,7 @@ async def create_quiz_board_from_topic(
                 question = Question(
                     category_id=category.id,
                     question_text=q_data["question_text"],
-                    answer=q_data["answer"],
+                    answer_text=q_data["answer"],
                     points=q_data["points"]
                 )
                 db.add(question)
@@ -177,7 +178,7 @@ async def create_quiz_board_from_topic(
 # async def create_quiz_from_document(
 #     file: UploadFile = File(None),
 #     db: Session = Depends(get_db),
-#     current_user: dict = Depends(get_current_user)
+#     current_user: User = Depends(get_current_user)
 # ):
 #     # Read the file contents and return the text
 #     file_contents = await file.read()

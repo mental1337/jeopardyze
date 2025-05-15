@@ -12,7 +12,7 @@ class QuestionAttempt(MyBaseModel):
     is_correct = Column(Boolean, nullable=True, default=None)
     points_earned = Column(Integer, default=0)
     attempted_at = Column(DateTime, default=datetime.now)
-    status = Column(String(20), default="unattempted") # unattempted, attempted, correct, incorrect
+    status = Column(String(20), default="unattempted") # unattempted, correct, incorrect
 
     # Relationships
     game_session = relationship("GameSession", back_populates="question_attempts")

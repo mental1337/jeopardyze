@@ -13,5 +13,5 @@ class QuizBoard(MyBaseModel):
     # Relationships
     created_by_user = relationship("User", back_populates="quiz_boards")
     categories = relationship("Category", back_populates="quiz_board")
-
+    game_sessions = relationship("GameSession", back_populates="quiz_board")
     
