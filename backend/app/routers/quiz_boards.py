@@ -8,6 +8,7 @@ from app.models.category import Category
 from app.models.question import Question
 from app.models.quiz_board import QuizBoard
 from app.models.game_session import GameSession
+from app.core.logging import logger
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -64,7 +65,7 @@ async def create_quiz_board_from_topic(
     # Check if the same topic already exists in the database
     existing_quiz_board = db.query(QuizBoard).filter(QuizBoard.source_content == topic).first()
     if existing_quiz_board:
-        print(f"Quiz board already exists for topic: {topic}, returning existing quiz board")
+        logger.info(f"Quiz board already exists for topic: {topic}, returning existing quiz board")
 
         # Create a new game session for the existing quiz board
         game_session = GameSession(
@@ -83,11 +84,12 @@ async def create_quiz_board_from_topic(
         }
     
     # Generate the quiz board
-    print(f"Generating quiz board for topic: {topic}")
+    logger.info(f"Generating quiz board for topic: {topic}")
     try:
         llm_service = LLMService()
         quiz_data = llm_service.generate_quiz_board_from_topic(topic)
     except Exception as e:
+        logger.error(f"Failed to generate quiz board: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get response from LLM. Error: {e}")
 
     # quiz_data is a json object of the following format:
@@ -117,8 +119,8 @@ async def create_quiz_board_from_topic(
         created_by_user_id=current_user.id
     )
     
-    # Add quiz data to the databasE
-    print(f"Adding quiz board to the database")
+    # Add quiz data to the database
+    logger.info(f"Adding quiz board to the database")
     try:
         db.add(quiz_board)
         db.flush()
@@ -156,6 +158,8 @@ async def create_quiz_board_from_topic(
         db.refresh(quiz_board)
         db.refresh(game_session)
         
+        logger.info(f"Successfully created quiz board and game session. Quiz Board ID: {quiz_board.id}, Game Session ID: {game_session.id}")
+        
         return {
             "quiz_board": quiz_board,
             "game_session_id": game_session.id
@@ -163,6 +167,7 @@ async def create_quiz_board_from_topic(
     
     except Exception as e:
         db.rollback()
+        logger.error(f"Failed to add quiz board to database: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to add the generated quiz board to the database. Error: {str(e)}"
