@@ -115,9 +115,17 @@ erDiagram
   - Get specific quiz board details
 
 #### Game Session
-- `POST /api/game-sessions`
-  - Start new game session
-  - Returns session ID and initial state
+- `POST /api/quiz-boards/{quizBoardId}/new-game-session`
+  - Creates a new game session for a quiz board
+  - Returns:
+    ```json
+    {
+        "game_session_id": "string",
+        "quiz_board_id": "string",
+        "status": "in_progress",
+        "started_at": "datetime"
+    }
+    ```
 
 - `GET /api/game-sessions/{id}`
   - Get game session details including:

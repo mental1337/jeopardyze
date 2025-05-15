@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, Form, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -7,6 +7,7 @@ from app.services.llm_service import LLMService
 from app.models.category import Category
 from app.models.question import Question
 from app.models.quiz_board import QuizBoard
+from app.models.game_session import GameSession
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -38,6 +39,9 @@ class QuizBoardPydanticModel(BaseModel):
     class Config:
         from_attributes = True  # This allows the model to be initialized from SQLAlchemy models by matching the attributes
 
+class QuizBoardResponse(BaseModel):
+    quiz_board: QuizBoardPydanticModel
+    game_session_id: int
 
 @router.get("", response_model=List[QuizBoardPydanticModel])
 async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[QuizBoard]:
@@ -51,21 +55,35 @@ async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] =
 
     return quiz_boards
 
-
-@router.post("/from-topic", response_model=QuizBoardPydanticModel)
+@router.post("/from-topic", response_model=QuizBoardResponse)
 async def create_quiz_board_from_topic(
     topic: str = Form(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
-) -> QuizBoard: # This function returns QuizBoard object, which the decorator will convert to QuizBoardPydanticModel. Technically, doesn't matter.
-    
+) -> Dict:
     # Check if the same topic already exists in the database
     existing_quiz_board = db.query(QuizBoard).filter(QuizBoard.source_content == topic).first()
     if existing_quiz_board:
-        # Return the existing quiz board
-        return existing_quiz_board
+        print(f"Quiz board already exists for topic: {topic}, returning existing quiz board")
+
+        # Create a new game session for the existing quiz board
+        game_session = GameSession(
+            quiz_board_id=existing_quiz_board.id,
+            user_id=current_user.id,
+            status="in_progress",
+            started_at=datetime.utcnow()
+        )
+        db.add(game_session)
+        db.commit()
+        db.refresh(game_session)
+        
+        return {
+            "quiz_board": existing_quiz_board,
+            "game_session_id": game_session.id
+        }
     
     # Generate the quiz board
+    print(f"Generating quiz board for topic: {topic}")
     try:
         llm_service = LLMService()
         quiz_data = llm_service.generate_quiz_board_from_topic(topic)
@@ -100,6 +118,7 @@ async def create_quiz_board_from_topic(
     )
     
     # Add quiz data to the databasE
+    print(f"Adding quiz board to the database")
     try:
         db.add(quiz_board)
         db.flush()
@@ -123,11 +142,24 @@ async def create_quiz_board_from_topic(
                 )
                 db.add(question)
         
+        # Create a new game session for the new quiz board
+        game_session = GameSession(
+            quiz_board_id=quiz_board.id,
+            user_id=current_user.id,
+            status="in_progress",
+            started_at=datetime.utcnow()
+        )
+        db.add(game_session)
+        
         # Commit all changes
         db.commit()
         db.refresh(quiz_board)
+        db.refresh(game_session)
         
-        return quiz_board
+        return {
+            "quiz_board": quiz_board,
+            "game_session_id": game_session.id
+        }
     
     except Exception as e:
         db.rollback()
@@ -135,8 +167,6 @@ async def create_quiz_board_from_topic(
             status_code=500,
             detail=f"Failed to add the generated quiz board to the database. Error: {str(e)}"
         )
-
-
 
 # @router.post("/from-document")
 # async def create_quiz_from_document(
