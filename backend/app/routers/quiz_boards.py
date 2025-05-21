@@ -18,6 +18,8 @@ router = APIRouter(
     tags=["quiz-boards"]
 )
 
+
+
 class QuestionPydanticModel(BaseModel):
     id: int
     question_text: str
@@ -41,9 +43,6 @@ class QuizBoardPydanticModel(BaseModel):
     class Config:
         from_attributes = True  # This allows the model to be initialized from SQLAlchemy models by matching the attributes
 
-class QuizBoardResponse(BaseModel):
-    quiz_board: QuizBoardPydanticModel
-    game_session_id: int
 
 @router.get("", response_model=List[QuizBoardPydanticModel])
 async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[QuizBoard]:
@@ -56,6 +55,13 @@ async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] =
     quiz_boards = query.all()
 
     return quiz_boards
+
+
+####
+
+class QuizBoardResponse(BaseModel):
+    game_session_id: int
+
 
 @router.post("/from-topic", response_model=QuizBoardResponse)
 async def create_quiz_board_from_topic(
@@ -162,7 +168,6 @@ async def create_quiz_board_from_topic(
         logger.info(f"Successfully created quiz board and game session. Quiz Board ID: {quiz_board.id}, Game Session ID: {game_session.id}")
         
         return {
-            "quiz_board": quiz_board,
             "game_session_id": game_session.id
         }
     
