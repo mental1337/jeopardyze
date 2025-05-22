@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Container, VStack, Heading, Text, Button, Box, Spacer } from '@chakra-ui/react'
 import Navbar from '../components/Navbar'
-import CreateFromUpload from '../components/CreateFromUpload'
+// import CreateFromUpload from '../components/CreateFromUpload'
 import CreateFromText from '../components/CreateFromText'
 import ExistingQuizBoards from '../components/ExistingQuizBoards'
 

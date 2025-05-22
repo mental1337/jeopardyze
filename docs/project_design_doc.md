@@ -80,10 +80,10 @@ erDiagram
         int game_session_id FK
         int question_id FK
         string user_answer
-        boolean is_correct
+        string status
         int points_earned
         datetime attempted_at
-        string status
+        
     }
 
     User {
@@ -107,17 +107,19 @@ erDiagram
   - Accept topic/description
   - Returns generated quiz board
 
-- `GET /api/quiz-boards`
-  - List available quiz boards
-  - Supports search and filtering
-
-- `GET /api/quiz-boards/{id}`
-  - Get specific quiz board details
 
 #### Game Session
-- `POST /api/game-sessions`
-  - Start new game session
-  - Returns session ID and initial state
+- `POST /api/game-sessions/new-from-quiz-board/{quizBoardId}`
+  - Creates a new game session for a quiz board
+  - Returns:
+    ```json
+    {
+        "game_session_id": "string",
+        "session_quiz_board": "string",
+        "status": "in_progress",
+        "started_at": "datetime"
+    }
+    ```
 
 - `GET /api/game-sessions/{id}`
   - Get game session details including:
@@ -153,7 +155,7 @@ erDiagram
     }
     ```
 
-- `POST /api/game-sessions/{id}/questions/{questionId}/answer`
+- `POST /api/game-sessions/{id}/answer-question/{questionId}`
   - Submit answer for a question
   - Request body:
     ```json

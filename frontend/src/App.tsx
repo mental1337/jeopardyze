@@ -1,16 +1,16 @@
-import { useState } from 'react'
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 
 import './App.css'
 import Home from './pages/Home'
+import GameSession from './pages/GameSession'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/play/:gameSessionId" element={<GameSession />} />
       </Routes>
     </>
   )

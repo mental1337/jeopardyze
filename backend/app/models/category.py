@@ -11,4 +11,6 @@ class Category(MyBaseModel):
     # Relationships
     quiz_board = relationship("QuizBoard", back_populates="categories")
     questions = relationship("Question", back_populates="category")
-    
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name}, #questions={len(self.questions)})>"
