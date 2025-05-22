@@ -13,13 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import axios from 'axios';
-
-interface Question {
-    id: number;
-    question_text: string;
-    answer: string;
-    points: number;
-}
+import { Question, AnswerQuestionResponse } from '../types/game_session_types';
 
 interface QuestionModalProps {
     isOpen: boolean;
@@ -36,15 +30,18 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            const response = await axios.post(
-                `http://localhost:8000/api/game-sessions/${gameSessionId}/questions/${question.id}/answer`,
-                { answer }
-            );
-            
+            console.log(`Submitting answer: ${answer} for question: ${question.question_id} in game session: ${gameSessionId}`);
+            console.log(question);
+            const response = await axios.post<AnswerQuestionResponse>(
+                `http://localhost:8000/api/game-sessions/${gameSessionId}/answer-question/${question.question_id}`,
+                { answer: answer }
+            );            
+            // ^ Note that { answer: answer } is not the same as { "answer": answer }
+            // Because In JavaScript/TypeScript object literals, the property name (left of the colon) is always taken literally, not as a variable.
+
             toast({
-                title: response.data.is_correct ? 'Correct!' : 'Incorrect',
+                title: response.data.status === 'correct' ? 'Correct!' : 'Incorrect :(',
                 description: `The correct answer was: ${response.data.correct_answer}`,
-                status: response.data.is_correct ? 'success' : 'error',
                 duration: 5000,
                 isClosable: true,
             });
@@ -67,13 +64,13 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
         <Modal isOpen={isOpen} onClose={onClose}>
             <ModalOverlay />
             <ModalContent>
-                <ModalHeader>Question for ${question.points}</ModalHeader>
+                <ModalHeader>Question ({question.question_id}) for ${question.points}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
                     <VStack spacing={4} pb={4}>
                         <Text fontSize="lg">{question.question_text}</Text>
                         <Input
-                            placeholder="What is ...?"
+                            placeholder="What / Who is ...?"
                             value={answer}
                             onChange={(e) => setAnswer(e.target.value)}
                         />

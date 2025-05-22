@@ -2,24 +2,7 @@ import { Box, Flex, Grid, GridItem, Spacer, Text, useDisclosure } from '@chakra-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import QuestionModal from './QuestionModal';
-
-interface Category {
-    id: number;
-    name: string;
-    questions: Question[];
-}
-
-interface Question {
-    question_id: number;
-    question_text: string;
-    answer_text: string;
-    points: number;
-
-    user_answer: string | null;
-    status: 'unattempted' | 'correct' | 'wrong';
-    is_correct: boolean | null;
-    points_earned: number;
-}
+import { Question, Category, QuizBoard, GameSessionResponse} from '../types/game_session_types';
 
 interface QuizGridProps {
     gameSessionId: string;
@@ -35,7 +18,10 @@ export default function QuizGrid({ gameSessionId }: QuizGridProps) {
     useEffect(() => {
         const fetchGameSession = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                // const response = await axios.get(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                const response = await axios.get<GameSessionResponse>(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                // Now TypeScript knows the shape of response.data to be GameSessionResponse, and autocomplete helps
+
                 setQuizTitle(response.data.session_quiz_board.title);
                 setCategories(response.data.session_quiz_board.categories);
                 setScore(response.data.score);
@@ -58,7 +44,7 @@ export default function QuizGrid({ gameSessionId }: QuizGridProps) {
         switch (status) {
             case 'correct':
                 return 'green.500';
-            case 'wrong':
+            case 'incorrect':
                 return 'red.500';
             default:
                 return 'blue.600';

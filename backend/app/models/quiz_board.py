@@ -15,3 +15,5 @@ class QuizBoard(MyBaseModel):
     categories = relationship("Category", back_populates="quiz_board")
     game_sessions = relationship("GameSession", back_populates="quiz_board")
     
+    def __repr__(self):
+        return f"<QuizBoard(id={self.id}, title={self.title}, #categories={len(self.categories)})>"

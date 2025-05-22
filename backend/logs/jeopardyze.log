@@ -9,3 +9,44 @@
 2025-05-16 12:45:32,681 - jeopardyze - INFO - Quiz board already exists for topic: Marvel Cinematic Universe, returning existing quiz board
 2025-05-16 14:42:06,506 - jeopardyze - INFO - Quiz board already exists for topic: Marvel Cinematic Universe, returning existing quiz board
 2025-05-16 14:42:10,261 - jeopardyze - INFO - Quiz board already exists for topic: Marvel Cinematic Universe, returning existing quiz board
+2025-05-22 13:34:41,362 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:39:08,015 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:43:57,179 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:52:08,926 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:52:18,638 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:52:41,210 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:53:10,521 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:54:08,000 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:55:19,886 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:55:23,374 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:55:34,102 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:55:37,576 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:55:39,681 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:56:53,125 - jeopardyze - INFO - Answering question '1' for game session '2' with answer: 'stark'
+2025-05-22 13:57:26,763 - jeopardyze - INFO - Logger initialized
+2025-05-22 13:59:13,682 - jeopardyze - INFO - Answering question '2' for game session '2' with answer: 'Thor'
+2025-05-22 14:01:11,372 - jeopardyze - INFO - Answering question '2' for game session '2' with answer: 'Thor'
+2025-05-22 14:01:42,169 - jeopardyze - INFO - Answering question '3' for game session '2' with answer: 'Baddie'
+2025-05-22 14:06:52,791 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:07:05,115 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:07:29,053 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:07:50,806 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:08:05,116 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:08:42,685 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:09:40,380 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:09:48,174 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:09:55,693 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:10:35,367 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:10:56,955 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:10:58,975 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:11:05,451 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:12:36,404 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:13:12,903 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:13:53,010 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:13:57,400 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:14:04,221 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:14:13,960 - jeopardyze - INFO - Answering question '6' for game session '2' with answer: 'Iron Man'
+2025-05-22 14:17:00,173 - jeopardyze - INFO - Response: 'question_id=6 status='correct' correct_answer='Iron Man' points_earned=200 updated_score=200 game_status='in_progress''
+2025-05-22 14:17:02,665 - jeopardyze - INFO - Logger initialized
+2025-05-22 14:21:33,995 - jeopardyze - INFO - Answering question '7' for game session '2' with answer: 'Captain America'
+2025-05-22 14:21:34,024 - jeopardyze - INFO - Response: 'question_id=7 status='incorrect' correct_answer='The Avengers' points_earned=0 updated_score=0 game_status='in_progress''

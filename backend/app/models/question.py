@@ -14,3 +14,5 @@ class Question(MyBaseModel):
     category = relationship("Category", back_populates="questions")
     question_attempts = relationship("QuestionAttempt", back_populates="question")
     
+    def __repr__(self):
+        return f"<Question(id={self.id}, points={self.points}, question_text={self.question_text},)>"
