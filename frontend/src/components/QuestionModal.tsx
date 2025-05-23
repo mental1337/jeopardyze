@@ -11,7 +11,7 @@ import {
     Input,
     useToast,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Question, AnswerQuestionResponse } from '../types/game_session_types';
 
@@ -28,7 +28,17 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
     const [isSubmitting, setIsSubmitting] = useState(false);
     const toast = useToast();
 
-    const handleSubmit = async () => {
+    // Reset answer when modal is opened with a new question
+    useEffect(() => {
+        if (isOpen) {
+            setAnswer('');
+        }
+    }, [isOpen, question.question_id]);
+
+    const handleSubmit = async (e?: React.FormEvent) => {
+        // Prevent default form submission if event exists
+        e?.preventDefault();
+        
         setIsSubmitting(true);
         try {
             const response = await axios.post<AnswerQuestionResponse>(
@@ -79,21 +89,24 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
                         
                         {question.status === 'unattempted' ? (
                             // Show input and submit button for unanswered questions
-                            <>
-                                <Input
-                                    placeholder="What / Who is ...?"
-                                    value={answer}
-                                    onChange={(e) => setAnswer(e.target.value)}
-                                />
-                                <Button
-                                    colorScheme="blue"
-                                    onClick={handleSubmit}
-                                    isLoading={isSubmitting}
-                                    isDisabled={!answer.trim()}
-                                >
-                                    Submit Answer
-                                </Button>
-                            </>
+                            <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                                <VStack spacing={4} width="100%">
+                                    <Input
+                                        placeholder="What / Who is ...?"
+                                        value={answer}
+                                        onChange={(e) => setAnswer(e.target.value)}
+                                    />
+                                    <Button
+                                        type="submit"
+                                        colorScheme="blue"
+                                        isLoading={isSubmitting}
+                                        isDisabled={!answer.trim()}
+                                        width="100%"
+                                    >
+                                        Submit Answer
+                                    </Button>
+                                </VStack>
+                            </form>
                         ) : (
                             // Show results for answered questions
                             <VStack spacing={2} align="stretch">
