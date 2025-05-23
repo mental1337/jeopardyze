@@ -96,15 +96,14 @@ class GameSessionsService:
 
         # Update Game Session
         game_session.score = updated_score
-
         # Check if all questions have been answered
         total_questions = sum(len(cat.questions) for cat in game_session.quiz_board.categories)
         answered_questions = db.query(QuestionAttempt).filter(QuestionAttempt.game_session_id == game_session_id).count()
         if answered_questions == total_questions:
             game_session.status = "completed"
             game_session.completed_at = datetime.now()
-            db.commit()
-            db.refresh(game_session)
+        db.commit()
+        db.refresh(game_session)
 
         response = AnswerQuestionResponse(
             question_id=question_id,

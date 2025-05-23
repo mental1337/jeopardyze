@@ -50,3 +50,8 @@
 2025-05-22 14:17:02,665 - jeopardyze - INFO - Logger initialized
 2025-05-22 14:21:33,995 - jeopardyze - INFO - Answering question '7' for game session '2' with answer: 'Captain America'
 2025-05-22 14:21:34,024 - jeopardyze - INFO - Response: 'question_id=7 status='incorrect' correct_answer='The Avengers' points_earned=0 updated_score=0 game_status='in_progress''
+2025-05-22 15:34:43,554 - jeopardyze - INFO - Logger initialized
+2025-05-22 16:41:12,391 - jeopardyze - INFO - Logger initialized
+2025-05-22 16:41:28,302 - jeopardyze - INFO - Logger initialized
+2025-05-22 16:41:49,417 - jeopardyze - INFO - Answering question '8' for game session '2' with answer: 'Thanos'
+2025-05-22 16:41:49,442 - jeopardyze - INFO - Response: 'question_id=8 status='correct' correct_answer='Thanos' points_earned=600 updated_score=600 game_status='in_progress''
