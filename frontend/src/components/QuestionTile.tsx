@@ -1,12 +1,12 @@
 import { Box, Text } from '@chakra-ui/react';
 import { Question } from '../types/game_session_types';
 
-interface QuestionTileProps {
+interface QuestionBoxProps {
     question: Question;
     onClick: (question: Question) => void;
 }
 
-export default function QuestionTile({ question, onClick }: QuestionTileProps) {
+export default function QuestionBox({ question, onClick }: QuestionBoxProps) {
     const getQuestionStatusIcon = (status: Question['status']) => {
         switch (status) {
             case 'correct':
@@ -18,16 +18,44 @@ export default function QuestionTile({ question, onClick }: QuestionTileProps) {
         }
     };
 
+    const getBoxStyles = (status: Question['status']) => {
+        switch (status) {
+            case 'unattempted':
+                return {
+                    bg: 'blue.600',
+                    color: 'gold',
+                    cursor: 'pointer',
+                    _hover: { opacity: 0.7 }
+                };
+            case 'correct':
+                return {
+                    bg: 'gray.700',
+                    color: 'gray.500',
+                    cursor: 'default'
+                };
+            case 'incorrect':
+                return {
+                    bg: 'gray.700',
+                    color: 'gray.500',
+                    cursor: 'default'
+                };
+            default:
+                return {
+                    bg: 'blue.600',
+                    cursor: 'pointer'
+                };
+        }
+    };
+
+    const styles = getBoxStyles(question.status);
+
     return (
         <Box
-            bg="blue.600"
-            color="gold"
             p={4}
             borderRadius="0"
             mb={2}
-            cursor={question.status === 'unattempted' ? 'pointer' : 'default'}
             onClick={() => onClick(question)}
-            _hover={question.status === 'unattempted' ? { opacity: 0.8 } : {}}
+            {...styles}
         >
             <Text textAlign="center" fontWeight="bold" fontSize="xl">
                 ${question.points}
