@@ -42,6 +42,21 @@ export default function QuizGrid({ gameSessionId }: QuizGridProps) {
         onOpen();    
     };
 
+    const updateQuestionAndScore = (updatedQuestion: Question, newScore: number) => {
+        // Update the score
+        setScore(newScore);
+
+        // Update the question in the categories array
+        setCategories(prevCategories => 
+            prevCategories.map(category => ({
+                ...category,
+                questions: category.questions.map(q => 
+                    q.question_id === updatedQuestion.question_id ? updatedQuestion : q
+                )
+            }))
+        );
+    };
+
     return (
         <Box p={2} bg="gray.800" borderRadius="md">
             <Flex p={4} bg="gray.800" color="white" alignItems="center" borderRadius="0">
@@ -77,6 +92,7 @@ export default function QuizGrid({ gameSessionId }: QuizGridProps) {
                     onClose={onClose}
                     question={selectedQuestion}
                     gameSessionId={gameSessionId}
+                    onQuestionAnswered={updateQuestionAndScore}
                 />
             )}
         </Box>

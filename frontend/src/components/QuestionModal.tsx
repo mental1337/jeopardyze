@@ -20,9 +20,10 @@ interface QuestionModalProps {
     onClose: () => void;
     question: Question;
     gameSessionId: string;
+    onQuestionAnswered: (updatedQuestion: Question, newScore: number) => void;
 }
 
-export default function QuestionModal({ isOpen, onClose, question, gameSessionId }: QuestionModalProps) {
+export default function QuestionModal({ isOpen, onClose, question, gameSessionId, onQuestionAnswered }: QuestionModalProps) {
     const [answer, setAnswer] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const toast = useToast();
@@ -36,6 +37,14 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
             );            
             // ^ Note that { answer: answer } is not the same as { "answer": answer }
             // Because In JavaScript/TypeScript object literals, the property name (left of the colon) is always taken literally, not as a variable.
+
+            // Update the question in the parent component
+            question.status = response.data.status as "unattempted" | "correct" | "incorrect";
+            question.answer_text = response.data.correct_answer;
+            question.points_earned = response.data.points_earned;
+            question.user_answer = answer;
+
+            onQuestionAnswered(question, response.data.updated_score);
 
             toast({
                 title: response.data.status === 'correct' ? 'Correct!' : 'Incorrect :(',
