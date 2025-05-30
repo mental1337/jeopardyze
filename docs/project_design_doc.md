@@ -107,6 +107,29 @@ erDiagram
   - Accept topic/description
   - Returns generated quiz board
 
+- `GET /api/quiz-boards/top`
+  - Lists top quiz boards by number of game sessions
+  - Query parameters:
+    - `limit` (optional): Number of quiz boards to return (default: 10)
+    - `offset` (optional): Pagination offset (default: 0)
+  - Returns:
+    ```json
+    {
+        "quiz_boards": [
+            {
+                "id": "string",
+                "title": "string",
+                "total_sessions": integer,
+                "top_score": integer,
+                "top_score_username": "string",              
+                "created_at": "datetime"
+            }
+        ],
+        "total": integer,
+        "limit": integer,
+        "offset": integer
+    }
+    ```
 
 #### Game Session
 - `POST /api/game-sessions/new-from-quiz-board/{quizBoardId}`
@@ -173,6 +196,7 @@ erDiagram
         "game_status": "string"
     }
     ```
+
 
 #### User Management
 - `POST /api/users/register`

@@ -1,0 +1,83 @@
+import { Box, Heading, Spinner, Text, useToast } from "@chakra-ui/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { TopQuizBoardModel, TopQuizBoardsResponse } from "../types/quiz_board_types";
+
+
+export default function TopQuizBoards() {
+    const toast = useToast();
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [data, setData] = useState<TopQuizBoardsResponse | null>(null);
+
+    useEffect(() => {
+        const fetchQuizBoards = async () => {
+            try {
+                const response = await axios.get<TopQuizBoardsResponse>('http://localhost:8000/api/quiz-boards/top');
+                setData(response.data);
+                setError(null);
+            } catch (err) {
+                setError('Failed to load top quiz boards');
+                toast({
+                    title: "Error loading top quiz boards",
+                    description: `Error: ${err}`,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchQuizBoards();
+    }, [toast]);
+
+    return (
+        <Box p={4} bg="gray.300" borderRadius="md" mt={4}>
+            <Heading size="md" mb={4}>Play existing Quiz Boards</Heading>
+            <Box overflowX="auto">
+                <Box as="table" width="100%" bg="white" borderRadius="md" borderWidth="1px">
+                    <Box as="thead" bg="gray.50">
+                        <Box as="tr">
+                            <Box as="th" p={3} textAlign="center">Title</Box>
+                            <Box as="th" p={3} textAlign="center">Times Played</Box>
+                            <Box as="th" p={3} textAlign="center">Top Score</Box>
+                            <Box as="th" p={3} textAlign="center">Scorer</Box>
+                        </Box>
+                    </Box>
+                    <Box as="tbody">
+                        {isLoading ? (
+                            <Box as="tr">
+                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                    <Spinner />
+                                </Box>
+                            </Box>
+                        ) : error ? (
+                            <Box as="tr">
+                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                    <Text color="red.500">{error}</Text>
+                                </Box>
+                            </Box>
+                        ) : data?.quiz_boards.length === 0 ? (
+                            <Box as="tr">
+                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                    <Text>No quiz boards available</Text>
+                                </Box>
+                            </Box>
+                        ) : (
+                            data?.quiz_boards.map((board: TopQuizBoardModel) => (
+                                <Box as="tr" key={board.id} borderTopWidth="1px">
+                                    <Box as="td" p={3} textAlign="center">{board.title}</Box>
+                                    <Box as="td" p={3} textAlign="center">{board.total_sessions}</Box>
+                                    <Box as="td" p={3} textAlign="center">{board.top_score}</Box>
+                                    <Box as="td" p={3} textAlign="center">{board.top_score_username}</Box>
+                                </Box>
+                            ))
+                        )}
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
+    );
+}

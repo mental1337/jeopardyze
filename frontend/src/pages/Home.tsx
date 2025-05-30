@@ -3,7 +3,7 @@ import { Container, VStack, Heading, Text, Button, Box, Spacer } from '@chakra-u
 import Navbar from '../components/Navbar'
 // import CreateFromUpload from '../components/CreateFromUpload'
 import CreateFromText from '../components/CreateFromText'
-import ExistingQuizBoards from '../components/ExistingQuizBoards'
+import TopQuizBoards from '../components/TopQuizBoards'
 
 const Home = () => {
     const navigate = useNavigate()
@@ -19,7 +19,7 @@ const Home = () => {
                     <CreateFromText />
 
                     {/* Third section - Existing Quiz Boards */}
-                    <ExistingQuizBoards />
+                    <TopQuizBoards />
 
                 </VStack>
             </Container>

@@ -44,7 +44,7 @@ export default function CreateFromText() {
     }
 
     return (
-        <Box p={4} bg="gray.100" borderRadius="md">
+        <Box p={4} bg="gray.300" borderRadius="md">
             <Heading size="md" mb={2}>Create a Jeopardy quiz from any topic or description</Heading>
             <Box 
                 as="textarea"

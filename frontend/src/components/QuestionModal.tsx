@@ -50,7 +50,7 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
 
             // Update the question in the parent component
             question.status = response.data.status as "unattempted" | "correct" | "incorrect";
-            question.answer_text = response.data.correct_answer;
+            question.correct_answer = response.data.correct_answer;
             question.points_earned = response.data.points_earned;
             question.user_answer = answer;
 
@@ -80,7 +80,7 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
     return (
         <Modal isOpen={isOpen} onClose={onClose} isCentered scrollBehavior='inside' size='xl'>
             <ModalOverlay />
-            <ModalContent bg='gray.400'>
+            <ModalContent bg='purple.800' color='white'>
                 <ModalHeader>Question for ${question.points}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
@@ -114,7 +114,7 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
                                     <strong>Your answer:</strong> {question.user_answer}
                                 </Text>
                                 <Text>
-                                    <strong>Correct answer:</strong> {question.answer_text}
+                                    <strong>Correct answer:</strong> {question.correct_answer}
                                 </Text>
                                 <Text color={question.status === 'correct' ? 'green.500' : 'red.500'}>
                                     {question.status === 'correct' ? '✓ Correct' : '✗ Incorrect'}

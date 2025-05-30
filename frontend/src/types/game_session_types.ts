@@ -5,7 +5,7 @@
 interface Question {
     question_id: number;
     question_text: string;
-    answer_text: string | null;
+    correct_answer: string | null;
     points: number;
     user_answer: string | null;
     status: 'unattempted' | 'correct' | 'incorrect';

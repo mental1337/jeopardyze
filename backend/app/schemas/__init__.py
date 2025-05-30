@@ -7,6 +7,14 @@ from .game_session import (
     AnswerQuestionRequest
 )
 
+from .quiz_board import (
+    TopQuizBoardModel,
+    TopQuizBoardsResponse,
+    QuestionPydanticModel,
+    CategoryPydanticModel,
+    QuizBoardPydanticModel
+)
+
 # This allows you to import directly from schemas like:
 # from app.schemas import GameSessionResponse
 # instead of:

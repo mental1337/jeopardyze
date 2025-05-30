@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Navbar() {
     return (
-        <Flex p={4} bg="gray.100" alignItems="center" w="100%" borderRadius={10}>
+        <Flex p={4} bg="gray.300" alignItems="center" w="100%" borderRadius={10}>
             <Link to="/">
             <Text fontSize="xl" fontWeight="bold">
                 Jeopardyze!

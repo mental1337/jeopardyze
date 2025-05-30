@@ -7,7 +7,7 @@ class Question(MyBaseModel):
     
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     question_text = Column(String, nullable=False)
-    answer_text = Column(String, nullable=False)
+    correct_answer = Column(String, nullable=False)
     points = Column(Integer, nullable=False)
 
     # Relationships

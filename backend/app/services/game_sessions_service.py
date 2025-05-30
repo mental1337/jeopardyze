@@ -44,7 +44,7 @@ class GameSessionsService:
                     session_question.user_answer = question_attempt.user_answer
                     session_question.status = question_attempt.status
                     session_question.points_earned = question_attempt.points_earned
-                    session_question.answer_text = question.answer_text # Only return this if the question has been answered
+                    session_question.correct_answer = question.correct_answer # Only return this if the question has been answered
 
                 session_category.questions.append(session_question)
             session_quiz_board.categories.append(session_category)
@@ -77,7 +77,7 @@ class GameSessionsService:
         if question_attempt:
             raise HTTPException(status_code=400, detail="Question already answered")
 
-        is_correct = question.answer_text == answer
+        is_correct = question.correct_answer == answer
         status = "correct" if is_correct else "incorrect"
         points_earned = question.points if is_correct else 0
         updated_score = game_session.score + points_earned
@@ -108,7 +108,7 @@ class GameSessionsService:
         response = AnswerQuestionResponse(
             question_id=question_id,
             status=status,
-            correct_answer=question.answer_text,
+            correct_answer=question.correct_answer,
             points_earned=points_earned,
             updated_score=updated_score,
             game_status=game_session.status

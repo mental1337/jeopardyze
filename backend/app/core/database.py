@@ -20,4 +20,8 @@ def get_db():
         yield db_session
     finally:
         db_session.close()
-        
+
+## Run as `python -m app.core.database` to create the tables
+if __name__ == "__main__":
+    print("Running this file as a script")
+    create_tables()

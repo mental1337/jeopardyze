@@ -1,18 +1,14 @@
 from typing import Optional, List, Dict
 from fastapi import APIRouter, Depends, Form, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.services.llm_service import LLMService
-from app.models.category import Category
-from app.models.question import Question
-from app.models.quiz_board import QuizBoard
-from app.models.game_session import GameSession
 from app.core.logging import logger
-from pydantic import BaseModel
-from datetime import datetime
-from app.models.user import User
+from app.models import QuizBoard, User
+from app.schemas import QuizBoardPydanticModel, TopQuizBoardsResponse, QuizBoardPydanticModel
 from app.services.quiz_board_service import QuizBoardService
+from app.services.game_sessions_service import GameSessionsService
 
 router = APIRouter(
     prefix="/api/quiz-boards",
@@ -20,33 +16,8 @@ router = APIRouter(
 )
 
 
-
-class QuestionPydanticModel(BaseModel):
-    id: int
-    question_text: str
-    answer_text: str
-    points: int
-
-class CategoryPydanticModel(BaseModel):
-    id: int
-    name: str
-    questions: List[QuestionPydanticModel]
-
-class QuizBoardPydanticModel(BaseModel):
-    id: int
-    title: str
-    source_type: str
-    source_content: str
-    created_by_user_id: int
-    created_at: datetime
-    categories: List[CategoryPydanticModel]
-
-    class Config:
-        from_attributes = True  # This allows the model to be initialized from SQLAlchemy models by matching the attributes
-
-
 @router.get("", response_model=List[QuizBoardPydanticModel])
-async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[QuizBoard]:
+async def get_all_quiz_boards(db: Session = Depends(get_db), search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[QuizBoard]:
     query = db.query(QuizBoard)
 
     if search:
@@ -64,12 +35,13 @@ async def get_quiz_boards(db: Session = Depends(get_db), search: Optional[str] =
 async def create_quiz_board_from_topic(
     topic: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user)
 ) -> Dict:
-    quiz_board = QuizBoardService.create_from_topic(topic, current_user.id, db)
-
+    quiz_board = QuizBoardService.create_from_topic(topic, user.id, db)
+    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user.id, db)
+    
     return {
-        "quiz_board_id": quiz_board.id
+        "game_session_id": game_session.id
     }
 
 
@@ -90,6 +62,19 @@ async def create_quiz_board_from_topic(
 #             "file_contents": file_contents,
 #             "file.file": file.file
 #             }
+
+
+## Endpoint: GET /api/quiz-boards/top?limit=10&offset=0
+@router.get("/top", response_model=TopQuizBoardsResponse)
+async def get_top_quiz_boards(
+    limit: int = 10,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+) -> TopQuizBoardsResponse:
+    """
+    Get top quiz boards sorted by number of game sessions, including top score information.
+    """
+    return QuizBoardService.get_top_quiz_boards(db, limit, offset)
 
 
 
