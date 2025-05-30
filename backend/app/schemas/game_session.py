@@ -5,7 +5,7 @@ from typing import List
 class SessionQuestionPyd(BaseModel):
     question_id: int
     question_text: str
-    answer_text: str | None = None
+    correct_answer: str | None = None
     points: int
     user_answer: str | None = None
     status: str = "unattempted"

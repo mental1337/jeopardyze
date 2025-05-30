@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models import GameSession, Question, QuestionAttempt, User, QuizBoard
 from app.schemas import GameSessionResponse, SessionQuizBoardPyd, SessionCategoryPyd, SessionQuestionPyd, AnswerQuestionResponse
 from app.core.logging import logger
+from fuzzywuzzy import fuzz
 
 class GameSessionsService:
     @staticmethod
@@ -64,7 +65,7 @@ class GameSessionsService:
         return game_session_response
 
     @staticmethod
-    def answer_question(game_session_id: int, question_id: int, answer: str, db: Session, user: User) -> AnswerQuestionResponse:
+    def answer_question(game_session_id: int, question_id: int, user_answer: str, db: Session, user: User) -> AnswerQuestionResponse:
         game_session = db.query(GameSession).filter(GameSession.id == game_session_id).first()
         if not game_session:
             raise HTTPException(status_code=404, detail="Game session not found")
@@ -77,7 +78,7 @@ class GameSessionsService:
         if question_attempt:
             raise HTTPException(status_code=400, detail="Question already answered")
 
-        is_correct = question.correct_answer == answer
+        is_correct = is_answer_correct(user_answer, question.correct_answer)
         status = "correct" if is_correct else "incorrect"
         points_earned = question.points if is_correct else 0
         updated_score = game_session.score + points_earned
@@ -85,7 +86,7 @@ class GameSessionsService:
         question_attempt = QuestionAttempt(
             game_session_id=game_session_id,
             question_id=question_id,
-            user_answer=answer,
+            user_answer=user_answer,
             status=status,
             points_earned=points_earned
         )
@@ -115,3 +116,17 @@ class GameSessionsService:
         )
 
         return response
+
+
+def is_answer_correct(user_answer: str, correct_answer: str, threshold: int = 80) -> bool:
+    # Normalize both answers
+    user_answer = user_answer.strip().lower()
+    correct_answer = correct_answer.strip().lower()
+    
+    # Get the ratio of similarity (0-100)
+    ratio = fuzz.ratio(user_answer, correct_answer)
+    
+    # Also try partial ratio for cases where user answer is a subset
+    partial_ratio = fuzz.partial_ratio(user_answer, correct_answer)
+    
+    return max(ratio, partial_ratio) >= threshold

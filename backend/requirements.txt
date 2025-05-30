@@ -6,3 +6,4 @@ python-dotenv
 python-multipart
 langchain
 langchain-openai
+fuzzywuzzy[speedup]
