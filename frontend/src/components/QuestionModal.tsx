@@ -56,14 +56,17 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
 
             onQuestionAnswered(question, response.data.updated_score);
 
-            toast({
-                title: response.data.status === 'correct' ? 'Correct!' : 'Incorrect :(',
-                description: `Correct answer: ${response.data.correct_answer}`,
-                duration: 5000,
-                isClosable: true,
-            });
+            // toast({
+            //     title: response.data.status === 'correct' ? 'Correct!' : 'Incorrect :(',
+            //     description: `Correct answer: ${response.data.correct_answer}`,
+            //     duration: 5000,
+            //     isClosable: true,
+            // });
 
-            onClose();
+            // Close the modal in 3 seconds
+            setTimeout(() => {
+                onClose();
+            }, 3000);
         } catch (error) {
             toast({
                 title: 'Error',
@@ -110,14 +113,14 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
                         ) : (
                             // Show results for answered questions
                             <VStack spacing={2} align="stretch">
-                                <Text>
-                                    <strong>Your answer:</strong> {question.user_answer}
+                                <Text color={question.status === 'correct' ? 'green.500' : 'red.500'} fontWeight="bold">
+                                    {question.status === 'correct' ? '✓ Correct' : '✗ Incorrect'}
                                 </Text>
                                 <Text>
                                     <strong>Correct answer:</strong> {question.correct_answer}
                                 </Text>
-                                <Text color={question.status === 'correct' ? 'green.500' : 'red.500'}>
-                                    {question.status === 'correct' ? '✓ Correct' : '✗ Incorrect'}
+                                <Text>
+                                    <strong>Your answer:</strong> {question.user_answer}
                                 </Text>
                                 <Text>
                                     <strong>Points earned:</strong> {question.points_earned}

@@ -42,6 +42,7 @@ erDiagram
     QuizBoard ||--o{ GameSession : played_in
     User ||--o{ GameSession : plays
     GameSession ||--o{ QuestionAttempt : tracks
+    GuestSession ||--o{ GameSession : plays
 
     QuizBoard {
         int id PK
@@ -69,6 +70,7 @@ erDiagram
         int id PK
         int quiz_board_id FK
         int user_id FK
+        int guest_session_id FK
         int total_score
         datetime started_at
         datetime completed_at
@@ -83,7 +85,6 @@ erDiagram
         string status
         int points_earned
         datetime attempted_at
-        
     }
 
     User {
@@ -91,6 +92,17 @@ erDiagram
         string username
         string email
         string password_hash
+        boolean email_verified
+        string verification_code
+        datetime verification_code_expires_at
+        boolean is_active
+    }
+
+    GuestSession {
+        int id PK
+        string session_token
+        datetime created_at
+        int converted_to_user_id FK
     }
 ```
 
@@ -197,6 +209,77 @@ erDiagram
     }
     ```
 
+#### Authentication
+- `POST /api/auth/guest-session`
+  - Creates a new guest session
+  - Returns:
+    ```json
+    {
+        "token": "string",  # JWT token for guest
+        "expires_at": "datetime"
+    }
+    ```
+
+- `POST /api/auth/register`
+  - Register new user
+  - Request:
+    ```json
+    {
+        "username": "string",
+        "email": "string",
+        "password": "string",
+        "guest_session_token": "string"  # Optional
+    }
+    ```
+  - Response:
+    ```json
+    {
+        "message": "Verification code sent to email",
+        "email": "string"
+    }
+    ```
+
+- `POST /api/auth/verify-email`
+  - Verify email with code
+  - Request:
+    ```json
+    {
+        "email": "string",
+        "code": "string"
+    }
+    ```
+  - Response:
+    ```json
+    {
+        "token": "string",  # JWT token
+        "user": {
+            "id": "number",
+            "username": "string",
+            "email": "string"
+        }
+    }
+    ```
+
+- `POST /api/auth/login`
+  - Login with credentials
+  - Request:
+    ```json
+    {
+        "username_or_email": "string",
+        "password": "string"
+    }
+    ```
+  - Response:
+    ```json
+    {
+        "token": "string",  # JWT token
+        "user": {
+            "id": "number",
+            "username": "string",
+            "email": "string"
+        }
+    }
+    ```
 
 #### User Management
 - `POST /api/users/register`
@@ -209,21 +292,29 @@ erDiagram
 ```mermaid
 graph TD
     App --> Navbar
+    App --> LoginBar
     App --> HomePage
     App --> QuizBoardPage
     App --> GameSessionPage
     App --> AuthPage
     
     Navbar --> Logo
-    Navbar --> AuthButton
     Navbar --> UserMenu
     
-    AuthButton --> LoginButton
-    AuthButton --> RegisterButton
+    LoginBar --> SignupPrompt
+    LoginBar --> AuthModal
     
     UserMenu --> Username
     UserMenu --> ProfileLink
     UserMenu --> LogoutButton
+    
+    AuthModal --> SignupForm
+    AuthModal --> LoginForm
+    AuthModal --> VerificationForm
+    
+    SignupForm --> FormInput
+    LoginForm --> FormInput
+    VerificationForm --> FormInput
     
     HomePage --> CreateFromTopic
     HomePage --> CreateFromDocument
@@ -273,6 +364,18 @@ graph TD
 5. ScoreDisplay
    - Current score
    - Game progress
+
+6. LoginBar
+   - Signup prompt for guest users
+   - Auth modal trigger
+   - Responsive design
+
+7. AuthModal
+   - Signup form (username + email + password)
+   - Login form (username/email + password)
+   - Verification form (code input)
+   - Smooth transitions between forms
+   - Error handling and validation
 
 ## 5. User Flows and URL Structure
 
@@ -330,6 +433,37 @@ POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
 ↓ (Game complete - show completion modal)
 /play/:gameSessionId
 ```
+
+#### Authentication Flow
+1. Guest User Flow:
+   ```
+   / (Home page)
+   ↓ (Start playing)
+   POST /api/auth/guest-session
+   ↓ (Success - returns guest token)
+   /play/:gameSessionId
+   ↓ (During gameplay)
+   LoginBar shows "Signup to save progress"
+   ↓ (Click signup)
+   AuthModal opens
+   ↓ (Enter username, email & password)
+   POST /api/auth/register
+   ↓ (Enter verification code)
+   POST /api/auth/verify-email
+   ↓ (Success - returns user token)
+   Guest session converted to user session
+   ```
+
+2. Returning User Flow:
+   ```
+   / (Home page)
+   ↓ (Click login)
+   AuthModal opens
+   ↓ (Enter username/email & password)
+   POST /api/auth/login
+   ↓ (Success - returns user token)
+   / (Home page, logged in)
+   ```
 
 #### User Authentication Flow
 ```
@@ -471,8 +605,50 @@ graph TD
 
 ### 7.1 Authentication
 - JWT-based authentication
-- Password hashing
+- Password-based authentication
+- Email verification for signup
+- Guest session support
+- Token refresh mechanism
 - Session management
+
+#### JWT Token Structure
+1. Guest Token:
+   ```json
+   {
+       "sub": "guest",
+       "session_id": "string",
+       "exp": "number"
+   }
+   ```
+
+2. User Token:
+   ```json
+   {
+       "sub": "user",
+       "user_id": "number",
+       "username": "string",
+       "email": "string",
+       "exp": "number"
+   }
+   ```
+
+#### Token Management
+- Guest tokens expire after 24 hours
+- User tokens expire after 24 hours
+- Email verification codes expire after 15 minutes
+- Tokens stored in localStorage
+- Automatic token refresh mechanism
+- Secure token transmission using HTTPS
+
+#### Password Security
+- Passwords are hashed using bcrypt
+- Minimum password requirements:
+  - At least 8 characters
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+  - At least one special character
+- Password reset functionality (future enhancement)
 
 ### 7.2 Data Protection
 - Input validation
