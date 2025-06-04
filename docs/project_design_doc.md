@@ -281,11 +281,6 @@ erDiagram
     }
     ```
 
-#### User Management
-- `POST /api/users/register`
-- `POST /api/users/login`
-- `GET /api/users/profile`
-
 ## 4. Frontend Design
 
 ### 4.1 Component Structure

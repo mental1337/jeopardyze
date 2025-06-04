@@ -7,3 +7,5 @@ python-multipart
 langchain
 langchain-openai
 fuzzywuzzy[speedup]
+python-jose[cryptography]
+passlib[bcrypt]
