@@ -1,16 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
-
 from app.core.database import get_db
 from app.services.auth_service import (
     authenticate_user,
     create_access_token,
-    get_password_hash,
-    ACCESS_TOKEN_EXPIRE_MINUTES
+    get_password_hash
 )
-from app.services.email_service import send_verification_email, verify_code
+from app.services.email_verify_service import send_verification_email, verify_code
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -41,10 +38,8 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(user.id)},
-        expires_delta=access_token_expires
     )
     
     return LoginResponse(
@@ -116,10 +111,8 @@ async def verify_email(
     db.commit()
     
     # Create access token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=access_token_expires
+        data={"sub": str(user.id)}
     )
     
     return VerifyEmailResponse(

@@ -2,6 +2,11 @@ venv/
 logs/
 .env
 *.db
+*.log
 
 .ipynb_checkpoints/
 *.ipynb
+
+# Test files
+test.db
+test.log

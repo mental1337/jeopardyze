@@ -43,3 +43,6 @@ artifacts/
 *.ipynb
 docs/learnings/
 scratch.txt
+*.db
+*.log
+

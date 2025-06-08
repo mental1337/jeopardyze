@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 pydantic
+pydantic[email]
 sqlalchemy
 python-dotenv
 python-multipart
@@ -9,3 +10,4 @@ langchain-openai
 fuzzywuzzy[speedup]
 python-jose[cryptography]
 passlib[bcrypt]
+# mailgun-python
