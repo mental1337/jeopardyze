@@ -5,7 +5,8 @@ from app.core.database import get_db
 from app.services.auth_service import (
     authenticate_user,
     create_access_token,
-    get_password_hash
+    get_password_hash,
+    create_guest_session
 )
 from app.services.email_verify_service import send_verification_email, verify_code
 from app.schemas.auth import (
@@ -14,7 +15,8 @@ from app.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
     VerifyEmailRequest,
-    VerifyEmailResponse
+    VerifyEmailResponse,
+    GuestSessionResponse
 )
 from app.models.user import User
 
@@ -24,6 +26,15 @@ router = APIRouter(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+@router.post("/guest-session", response_model=GuestSessionResponse)
+async def create_guest_session_endpoint(
+    db: Session = Depends(get_db)
+) -> GuestSessionResponse:
+    token = create_guest_session(db)
+    return GuestSessionResponse(
+        access_token=token
+    )
 
 @router.post("/login", response_model=LoginResponse)
 async def login(

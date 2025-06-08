@@ -15,6 +15,16 @@ from .quiz_board import (
     QuizBoardPydanticModel
 )
 
+from .auth import (
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
+    VerifyEmailRequest,
+    VerifyEmailResponse,
+    GuestSessionResponse
+)
+
 # This allows you to import directly from schemas like:
 # from app.schemas import GameSessionResponse
 # instead of:

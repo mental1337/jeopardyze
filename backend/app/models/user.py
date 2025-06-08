@@ -14,6 +14,7 @@ class User(MyBaseModel):
     # Relationships
     quiz_boards = relationship("QuizBoard", back_populates="created_by_user")
     game_sessions = relationship("GameSession", back_populates="user")
+    guest_sessions = relationship("GuestSession", back_populates="converted_to_user")
     
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"

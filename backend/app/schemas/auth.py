@@ -30,4 +30,7 @@ class VerifyEmailResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     username: str
-    email: str 
+    email: str
+
+class GuestSessionResponse(BaseModel):
+    access_token: str 
