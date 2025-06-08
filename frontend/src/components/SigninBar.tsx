@@ -1,11 +1,14 @@
 import { Box, Button, FormControl, Input, HStack, useToast } from "@chakra-ui/react";
 import { useState } from "react";
+import { LoginRequest, LoginResponse } from "../types/auth_types";
+import axios from "axios";
 
 interface SigninBarProps {
     onClose: () => void;
+    onLoginSuccess: (response: LoginResponse) => void;
 }
 
-export default function SigninBar({ onClose }: SigninBarProps) {
+export default function SigninBar({ onClose, onLoginSuccess }: SigninBarProps) {
     const [usernameOrEmail, setUsernameOrEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -16,24 +19,17 @@ export default function SigninBar({ onClose }: SigninBarProps) {
         setIsLoading(true);
 
         try {
-            // TODO: Implement actual signin logic
-            const response = await fetch("http://localhost:8000/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    username_or_email: usernameOrEmail,
-                    password: password,
-                }),
-            });
+            const request: LoginRequest = {
+                username_or_email: usernameOrEmail,
+                password: password,
+            };
 
-            if (!response.ok) {
-                throw new Error("Signin failed");
-            }
+            const { data } = await axios.post<LoginResponse>(
+                "http://localhost:8000/api/auth/login",
+                request
+            );
 
-            const data = await response.json();
-            // TODO: Store token and update auth state
+            onLoginSuccess(data);
             onClose();
             toast({
                 title: "Success",
@@ -43,9 +39,13 @@ export default function SigninBar({ onClose }: SigninBarProps) {
                 isClosable: true,
             });
         } catch (error) {
+            const errorMessage = axios.isAxiosError(error) && error.response?.data?.detail
+                ? error.response.data.detail
+                : "Failed to sign in. Please check your credentials.";
+            
             toast({
                 title: "Error",
-                description: "Failed to sign in. Please check your credentials.",
+                description: errorMessage,
                 status: "error",
                 duration: 3000,
                 isClosable: true,

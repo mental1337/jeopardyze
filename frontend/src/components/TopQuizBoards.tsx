@@ -35,7 +35,7 @@ export default function TopQuizBoards() {
 
     return (
         <Box p={4} bg="gray.300" borderRadius="md" mt={4}>
-            <Heading size="md" mb={4}>Play existing Quiz Boards</Heading>
+            <Heading size="md" mb={4}>Top Games</Heading>
             <Box overflowX="auto">
                 <Box as="table" width="100%" bg="white" borderRadius="md" borderWidth="1px">
                     <Box as="thead" bg="gray.50">

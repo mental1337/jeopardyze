@@ -1,11 +1,15 @@
 import { Box, Button, FormControl, Input, HStack, useToast } from "@chakra-ui/react";
 import { useState } from "react";
+import { RegisterRequest, RegisterResponse } from "../types/auth_types";
+import axios from "axios";
 
 interface SignupBarProps {
     onClose: () => void;
+    onRegisterSuccess: (response: RegisterResponse) => void;
+    guestSessionToken?: string;
 }
 
-export default function SignupBar({ onClose }: SignupBarProps) {
+export default function SignupBar({ onClose, onRegisterSuccess, guestSessionToken }: SignupBarProps) {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -17,37 +21,35 @@ export default function SignupBar({ onClose }: SignupBarProps) {
         setIsLoading(true);
 
         try {
-            // TODO: Implement actual signup logic
-            const response = await fetch("http://localhost:8000/api/auth/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password,
-                }),
-            });
+            const request: RegisterRequest = {
+                username,
+                email,
+                password,
+                guest_session_token: guestSessionToken,
+            };
 
-            if (!response.ok) {
-                throw new Error("Signup failed");
-            }
+            const { data } = await axios.post<RegisterResponse>(
+                "http://localhost:8000/api/auth/register",
+                request
+            );
 
-            const data = await response.json();
-            // TODO: Handle email verification
+            onRegisterSuccess(data);
             onClose();
             toast({
                 title: "Success",
-                description: "Please check your email for verification code",
+                description: "Registration successful! Please check your email for verification.",
                 status: "success",
                 duration: 5000,
                 isClosable: true,
             });
         } catch (error) {
+            const errorMessage = axios.isAxiosError(error) && error.response?.data?.detail
+                ? error.response.data.detail
+                : "Failed to register. Please try again.";
+            
             toast({
                 title: "Error",
-                description: "Failed to sign up. Please try again.",
+                description: errorMessage,
                 status: "error",
                 duration: 3000,
                 isClosable: true,
