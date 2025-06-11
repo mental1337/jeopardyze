@@ -1,11 +1,16 @@
 import { Box, Heading, Spinner, Text, useToast } from "@chakra-ui/react";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { TopQuizBoardModel, TopQuizBoardsResponse } from "../types/quiz_board_types";
-
+import { useAuth } from "../contexts/AuthContext";
+import { useGuestSession } from "../hooks/useGuestSession";
+import api from "../lib/axios";
+import { useNavigate } from "react-router-dom";
 
 export default function TopQuizBoards() {
     const toast = useToast();
+    const navigate = useNavigate();
+    const { token, isGuest, user } = useAuth();
+    const { createGuestSession } = useGuestSession();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<TopQuizBoardsResponse | null>(null);
@@ -13,7 +18,7 @@ export default function TopQuizBoards() {
     useEffect(() => {
         const fetchQuizBoards = async () => {
             try {
-                const response = await axios.get<TopQuizBoardsResponse>('http://localhost:8000/api/quiz-boards/top');
+                const response = await api.get<TopQuizBoardsResponse>('/quiz-boards/top');
                 setData(response.data);
                 setError(null);
             } catch (err) {
@@ -32,6 +37,49 @@ export default function TopQuizBoards() {
 
         fetchQuizBoards();
     }, [toast]);
+
+    const handleQuizBoardClick = async (boardId: number) => {
+        try {
+            let userId: number | null = null;
+            let guestSessionId: number | null = null;
+
+            // If user is not logged in and not a guest, create a guest session
+            if (!token) {
+                const guestToken = await createGuestSession();
+                // Decode the JWT token to get the guest session ID
+                const payload = JSON.parse(atob(guestToken.split('.')[1]));
+                guestSessionId = parseInt(payload.session_id);
+            } else if (user) {
+                userId = user.id;
+            }
+
+            // Try to find an existing game session for this user/guest and quiz board
+            let response = await api.get('/game-sessions/existing', {
+                params: {
+                    quiz_board_id: boardId,
+                    user_id: userId,
+                    guest_session_id: guestSessionId
+                }
+            });
+
+            if (response.data?.game_session_id) {
+                navigate(`/play/${response.data.game_session_id}`);
+                return;
+            }
+
+            // Create a new game session
+            response = await api.post('/game-sessions/new-from-quiz-board/' + boardId);
+            navigate(`/play/${response.data.game_session_id}`);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to start game session",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+    };
 
     return (
         <Box p={4} bg="gray.300" borderRadius="md" mt={4}>
@@ -68,7 +116,16 @@ export default function TopQuizBoards() {
                         ) : (
                             data?.quiz_boards.map((board: TopQuizBoardModel) => (
                                 <Box as="tr" key={board.id} borderTopWidth="1px">
-                                    <Box as="td" p={3} textAlign="center">{board.title}</Box>
+                                    <Box 
+                                        as="td" 
+                                        p={3} 
+                                        textAlign="center"
+                                        cursor="pointer"
+                                        _hover={{ bg: "gray.100" }}
+                                        onClick={() => handleQuizBoardClick(board.id)}
+                                    >
+                                        {board.title}
+                                    </Box>
                                     <Box as="td" p={3} textAlign="center">{board.total_sessions}</Box>
                                     <Box as="td" p={3} textAlign="center">{board.top_score}</Box>
                                     <Box as="td" p={3} textAlign="center">{board.top_score_username}</Box>

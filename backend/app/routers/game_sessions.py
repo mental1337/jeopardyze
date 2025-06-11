@@ -1,11 +1,11 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Dict, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.logging import logger
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.models import Question, QuizBoard, User, GameSession
+from app.models import Question, QuizBoard, User, GameSession, GuestSession
 from app.schemas import GameSessionResponse, AnswerQuestionResponse, AnswerQuestionRequest
 from app.services.game_sessions_service import GameSessionsService
 
@@ -15,7 +15,49 @@ router = APIRouter(
     tags=["game-sessions"]
 )
 
-   
+@router.get("/existing")
+async def get_existing_game_session(
+    quiz_board_id: int = Query(..., description="ID of the quiz board"),
+    user_id: Optional[int] = Query(None, description="ID of the user"),
+    guest_session_id: Optional[int] = Query(None, description="ID of the guest session"),
+    db: Session = Depends(get_db)
+) -> Dict:
+    """
+    Find an existing active game session for a user/guest and quiz board.
+    Returns None if no active session exists.
+    """
+    # Verify quiz board exists
+    quiz_board = db.query(QuizBoard).filter(QuizBoard.id == quiz_board_id).first()
+    if not quiz_board:
+        raise HTTPException(status_code=404, detail=f"Quiz board with id '{quiz_board_id}' not found")
+
+    # Build query based on whether we're looking for a user or guest session
+    query = db.query(GameSession).filter(
+        GameSession.quiz_board_id == quiz_board_id,
+    )
+
+    if user_id is not None:
+        query = query.filter(GameSession.user_id == user_id)
+    elif guest_session_id is not None:
+        query = query.filter(GameSession.guest_session_id == guest_session_id)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Either user_id or guest_session_id must be provided"
+        )
+
+    # Get the most recent session if multiple exist
+    game_session = query.order_by(GameSession.created_at.desc()).first()
+
+    if not game_session:
+        return {
+            "game_session_id": None
+        }
+
+    return {
+        "game_session_id": game_session.id
+    }
+
 @router.get("/{game_session_id}", response_model=GameSessionResponse)
 async def get_game_session(game_session_id: int, db: Session = Depends(get_db)) -> GameSessionResponse:
     game_session = db.query(GameSession).filter(GameSession.id == game_session_id).first()
@@ -26,16 +68,24 @@ async def get_game_session(game_session_id: int, db: Session = Depends(get_db)) 
     return game_session_response
 
 
-@router.post("/new-from-quiz-board/{quiz_board_id}", response_model=GameSessionResponse)
-async def create_game_session_from_quiz_board(quiz_board_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> GameSessionResponse:
+@router.post("/new-from-quiz-board/{quiz_board_id}")
+async def create_game_session_from_quiz_board(
+    quiz_board_id: int,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user)
+) -> Dict:
     quiz_board = db.query(QuizBoard).filter(QuizBoard.id == quiz_board_id).first()
     if not quiz_board:
         logger.error(f"Couldn't create Game Session because Quiz board with id '{quiz_board_id}' not found")
         raise HTTPException(status_code=404, detail="Couldn't create Game Session because Quiz board with id '{quiz_board_id}' not found")
 
-    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user.id, db)
-    game_session_response = GameSessionsService.build_game_session_response(game_session)
-    return game_session_response
+    # Get user_id from the user object if it exists
+    user_id = user.id if user else None
+    
+    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user_id, db)
+    return {
+        "game_session_id": game_session.id
+    }
 
 
 @router.post("/{game_session_id}/answer-question/{question_id}", response_model=AnswerQuestionResponse)
