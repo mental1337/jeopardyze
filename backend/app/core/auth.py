@@ -15,16 +15,20 @@ AuthenticatedEntity = Union[User, Guest]
 # Security scheme for Bearer token
 security = HTTPBearer(auto_error=False)
 
-async def get_current_user(
+async def get_current_user_or_guest(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
-) -> Optional[AuthenticatedEntity]:
+) -> AuthenticatedEntity:
     """
     Get the current authenticated user or guest from the JWT token.
     Returns None if no valid token is provided (for optional authentication).
     """
     if not credentials:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authentication token provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
@@ -48,22 +52,28 @@ async def get_current_user(
             return user
             
     except JWTError:
-        return None
-
-async def get_current_user_required(
-    current_user: Optional[AuthenticatedEntity] = Depends(get_current_user)
-) -> AuthenticatedEntity:
-    """
-    Get the current authenticated user or guest, raising an error if not authenticated.
-    Use this when authentication is required.
-    """
-    if current_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
+            detail="Invalid authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return current_user
+
+async def get_current_logged_in_user(
+    current_user: Optional[AuthenticatedEntity] = Depends(get_current_user_or_guest)
+) -> User:
+    """
+    Get the current authenticated logged in user.
+    Use this when a logged in user is required.
+    """
+    if not current_user or not isinstance(current_user, User):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No logged in user found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return current_user   
+
 
 def is_guest(entity: AuthenticatedEntity) -> bool:
     """Check if the authenticated entity is a guest."""
