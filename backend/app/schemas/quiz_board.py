@@ -5,9 +5,10 @@ from typing import List
 class TopQuizBoardModel(BaseModel):
     id: int
     title: str
+    creator: str
     total_sessions: int
     top_score: int
-    top_score_username: str
+    top_scorer: str
     created_at: datetime
 
     class Config:
