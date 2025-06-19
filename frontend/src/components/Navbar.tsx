@@ -3,11 +3,37 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import SigninBar from "./SigninBar";
 import SignupBar from "./SignupBar";
+import { useAuth } from "../contexts/AuthContext";
+import { RegisterResponse } from "../types/auth_types";
 
 export default function Navbar() {
     const [showSignin, setShowSignin] = useState(false);
     const [showSignup, setShowSignup] = useState(false);
-    const isLoggedIn = false; // TODO: Replace with actual auth state
+    const { token, isGuest, user, isLoading, guestId, handleLoginSuccess, handleVerifyEmailSuccess } = useAuth();
+    
+    // Handle successful registration (just close the form)
+    const handleRegisterSuccess = (response: RegisterResponse) => {
+        setShowSignup(false);
+        // User will need to verify email before they can log in
+    };
+    
+    // Don't show auth state while loading
+    if (isLoading) {
+        return (
+            <Box bg="gray.300" borderRadius={10}>
+                <Flex p={4} alignItems="center" w="100%">
+                    <Link to="/">
+                        <Text fontSize="xl" fontWeight="bold">
+                            Jeopardyze!
+                        </Text>
+                    </Link>
+                    <Spacer />
+                </Flex>
+            </Box>
+        );
+    }
+
+    const isLoggedIn = !isGuest && user !== null;
 
     return (
         <Box bg="gray.300" borderRadius={10}>
@@ -22,6 +48,7 @@ export default function Navbar() {
                 <Spacer />
                 {isLoggedIn ? (
                     <Box>
+                        <Text>Welcome, {user?.username}!</Text>
                         <Link to="/profile">Profile</Link>
                     </Box>
                 ) : (
@@ -52,8 +79,8 @@ export default function Navbar() {
                 )}
             </Flex>
             
-            {showSignin && <SigninBar onClose={() => setShowSignin(false)}/>}
-            {showSignup && <SignupBar onClose={() => setShowSignup(false)}/>}
+            {showSignin && <SigninBar onClose={() => setShowSignin(false)} onLoginSuccess={handleLoginSuccess}/>}
+            {showSignup && <SignupBar onClose={() => setShowSignup(false)} guestId={guestId?.toString()} onRegisterSuccess={handleRegisterSuccess}/>}
         </Box>
     );
 }

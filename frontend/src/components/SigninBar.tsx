@@ -1,7 +1,7 @@
 import { Box, Button, FormControl, Input, HStack, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import { LoginRequest, LoginResponse } from "../types/auth_types";
-import axios from "axios";
+import api from "../lib/axios";
 
 interface SigninBarProps {
     onClose: () => void;
@@ -24,10 +24,7 @@ export default function SigninBar({ onClose, onLoginSuccess }: SigninBarProps) {
                 password: password,
             };
 
-            const { data } = await axios.post<LoginResponse>(
-                "http://localhost:8000/api/auth/login",
-                request
-            );
+            const { data } = await api.post<LoginResponse>('/auth/login', request);
 
             onLoginSuccess(data);
             onClose();
@@ -38,8 +35,8 @@ export default function SigninBar({ onClose, onLoginSuccess }: SigninBarProps) {
                 duration: 3000,
                 isClosable: true,
             });
-        } catch (error) {
-            const errorMessage = axios.isAxiosError(error) && error.response?.data?.detail
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.detail
                 ? error.response.data.detail
                 : "Failed to sign in. Please check your credentials.";
             

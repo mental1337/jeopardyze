@@ -1,7 +1,7 @@
 import { Box, Button, FormControl, Input, HStack, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import { RegisterRequest, RegisterResponse } from "../types/auth_types";
-import axios from "axios";
+import api from "../lib/axios";
 
 interface SignupBarProps {
     onClose: () => void;
@@ -28,10 +28,7 @@ export default function SignupBar({ onClose, onRegisterSuccess, guestId }: Signu
                 guest_id: guestId,
             };
 
-            const { data } = await axios.post<RegisterResponse>(
-                "http://localhost:8000/api/auth/register",
-                request
-            );
+            const { data } = await api.post<RegisterResponse>('/auth/register', request);
 
             onRegisterSuccess(data);
             onClose();
@@ -42,8 +39,8 @@ export default function SignupBar({ onClose, onRegisterSuccess, guestId }: Signu
                 duration: 5000,
                 isClosable: true,
             });
-        } catch (error) {
-            const errorMessage = axios.isAxiosError(error) && error.response?.data?.detail
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.detail
                 ? error.response.data.detail
                 : "Failed to register. Please try again.";
             

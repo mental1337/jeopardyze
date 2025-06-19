@@ -2,15 +2,13 @@ import { Box, Heading, Spinner, Text, useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { TopQuizBoardModel, TopQuizBoardsResponse } from "../types/quiz_board_types";
 import { useAuth } from "../contexts/AuthContext";
-import { useGuestSession } from "../hooks/useGuestSession";
 import api from "../lib/axios";
 import { useNavigate } from "react-router-dom";
 
 export default function TopQuizBoards() {
     const toast = useToast();
     const navigate = useNavigate();
-    const { token, isGuest, user } = useAuth();
-    const { createGuestSession } = useGuestSession();
+    const { token, isGuest, user, guestId } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<TopQuizBoardsResponse | null>(null);
@@ -41,14 +39,11 @@ export default function TopQuizBoards() {
     const handleQuizBoardClick = async (boardId: number) => {
         try {
             let userId: number | null = null;
-            let guestId: number | null = null;
+            let currentGuestId: number | null = null;
 
-            // If user is not logged in and not a guest, create a guest session
-            if (!token) {
-                const guestToken = await createGuestSession();
-                // Decode the JWT token to get the guest ID
-                const payload = JSON.parse(atob(guestToken.split('.')[1]));
-                guestId = parseInt(payload.guest_id);
+            // Use the guestId from AuthContext instead of parsing the token
+            if (isGuest) {
+                currentGuestId = guestId;
             } else if (user) {
                 userId = user.id;
             }
@@ -58,7 +53,7 @@ export default function TopQuizBoards() {
                 params: {
                     quiz_board_id: boardId,
                     user_id: userId,
-                    guest_id: guestId
+                    guest_id: currentGuestId
                 }
             });
 
