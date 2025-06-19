@@ -152,9 +152,10 @@ class QuizBoardService:
                     TopQuizBoardModel(
                         id=quiz_board.id,
                         title=quiz_board.title,
+                        creator=quiz_board.created_by_user.username,
                         total_sessions=total_sessions or 0,
                         top_score=top_score or 0,
-                        top_score_username=top_username or "-",
+                        top_scorer=top_username or "-",
                         created_at=quiz_board.created_at
                     )
                 )

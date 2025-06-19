@@ -2,9 +2,10 @@
 interface TopQuizBoardModel {
     id: number;
     title: string;
+    creator: string;
     total_sessions: number;
     top_score: number;
-    top_score_username: string;
+    top_scorer: string;
     created_at: string;
 }
 

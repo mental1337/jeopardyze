@@ -88,6 +88,7 @@ export default function TopQuizBoards() {
                     <Box as="thead" bg="gray.50">
                         <Box as="tr">
                             <Box as="th" p={3} textAlign="center">Title</Box>
+                            <Box as="th" p={3} textAlign="center">Creator</Box>
                             <Box as="th" p={3} textAlign="center">Times Played</Box>
                             <Box as="th" p={3} textAlign="center">Top Score</Box>
                             <Box as="th" p={3} textAlign="center">Scorer</Box>
@@ -96,19 +97,19 @@ export default function TopQuizBoards() {
                     <Box as="tbody">
                         {isLoading ? (
                             <Box as="tr">
-                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                <Box as="td" colSpan={5} p={4} textAlign="center">
                                     <Spinner />
                                 </Box>
                             </Box>
                         ) : error ? (
                             <Box as="tr">
-                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                <Box as="td" colSpan={5} p={4} textAlign="center">
                                     <Text color="red.500">{error}</Text>
                                 </Box>
                             </Box>
                         ) : data?.quiz_boards.length === 0 ? (
                             <Box as="tr">
-                                <Box as="td" colSpan={4} p={4} textAlign="center">
+                                <Box as="td" colSpan={5} p={4} textAlign="center">
                                     <Text>No quiz boards available</Text>
                                 </Box>
                             </Box>
@@ -125,9 +126,10 @@ export default function TopQuizBoards() {
                                     >
                                         {board.title}
                                     </Box>
+                                    <Box as="td" p={3} textAlign="center">{board.creator}</Box>
                                     <Box as="td" p={3} textAlign="center">{board.total_sessions}</Box>
                                     <Box as="td" p={3} textAlign="center">{board.top_score}</Box>
-                                    <Box as="td" p={3} textAlign="center">{board.top_score_username}</Box>
+                                    <Box as="td" p={3} textAlign="center">{board.top_scorer}</Box>
                                 </Box>
                             ))
                         )}
