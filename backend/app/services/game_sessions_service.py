@@ -68,6 +68,7 @@ class GameSessionsService:
         game_session_response = GameSessionResponse(
             id=game_session.id,
             user_id=game_session.user_id,
+            guest_id=game_session.guest_id,
             score=game_session.score,
             started_at=game_session.started_at,
             completed_at=game_session.completed_at,

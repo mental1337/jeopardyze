@@ -56,13 +56,17 @@ export default function TopQuizBoards() {
                     guest_id: currentGuestId
                 }
             });
+            
+            console.log("existing game session response", response);
 
             if (response.data?.game_session_id) {
+                console.log("navigating to existing game session", response.data.game_session_id);
                 navigate(`/play/${response.data.game_session_id}`);
                 return;
             }
 
             // Create a new game session
+            console.log("creating new game session");
             response = await api.post('/game-sessions/new-from-quiz-board/' + boardId);
             navigate(`/play/${response.data.game_session_id}`);
         } catch (error) {

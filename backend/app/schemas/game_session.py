@@ -23,7 +23,8 @@ class SessionQuizBoardPyd(BaseModel):
 
 class GameSessionResponse(BaseModel):
     id: int
-    user_id: int
+    user_id: int | None
+    guest_id: int | None
     score: int
     started_at: datetime
     completed_at: datetime | None

@@ -50,9 +50,7 @@ async def get_existing_game_session(
     game_session = query.order_by(GameSession.created_at.desc()).first()
 
     if not game_session:
-        return {
-            "game_session_id": None
-        }
+        return {}
 
     return {
         "game_session_id": game_session.id
