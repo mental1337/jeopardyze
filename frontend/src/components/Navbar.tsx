@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Heading, HStack, Spacer, Link as ChakraLink } from "@chakra-ui/react";
+import { Box, Text, Flex, Heading, HStack, Spacer, Link as ChakraLink, Menu, MenuButton, MenuList, MenuItem, Button } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SigninBar from "./SigninBar";
@@ -6,10 +6,11 @@ import SignupBar from "./SignupBar";
 import { useAuth } from "../contexts/AuthContext";
 import { RegisterResponse } from "../types/auth_types";
 
+
 export default function Navbar() {
     const [showSignin, setShowSignin] = useState(false);
     const [showSignup, setShowSignup] = useState(false);
-    const { token, isGuest, user, isLoading, guestId, handleLoginSuccess, handleVerifyEmailSuccess } = useAuth();
+    const { token, isGuest, user, isLoading, guestId, handleLoginSuccess, handleVerifyEmailSuccess, logout } = useAuth();
     
     // Listen for user token expiration events
     useEffect(() => {
@@ -51,7 +52,7 @@ export default function Navbar() {
     const isLoggedIn = !isGuest && user !== null;
     
     // Determine the name to display
-    const displayName = isLoggedIn ? user?.username : `Guest-${guestId}`;
+    const displayName = isLoggedIn ? user?.username : `Stranger-${guestId}`;
 
     return (
         <Box bg="gray.300" borderRadius={10}>
@@ -65,8 +66,11 @@ export default function Navbar() {
                 
                 <Spacer />
                 <Box>
-                    <Text>Hi {displayName}!</Text>
-                    {isLoggedIn && <Link to="/profile">Profile</Link>}
+                    <Text>Hi, {
+                        isLoggedIn ? (
+                            <UserMenu username={displayName} onSignOut={logout} />
+                        ) : displayName
+                    }!</Text>
                 </Box>
                 {!isLoggedIn && (
                     <HStack spacing={2} ml={4}>
@@ -91,7 +95,7 @@ export default function Navbar() {
                         >
                             Signup
                         </ChakraLink>
-                        <Text>to save progress</Text>
+                        <Text>to create.</Text>
                     </HStack>
                 )}
             </Flex>
@@ -99,5 +103,27 @@ export default function Navbar() {
             {showSignin && <SigninBar onClose={() => setShowSignin(false)} onLoginSuccess={handleLoginSuccess}/>}
             {showSignup && <SignupBar onClose={() => setShowSignup(false)} guestId={guestId?.toString()} onRegisterSuccess={handleRegisterSuccess}/>}
         </Box>
+    );
+}
+
+// Local component for the user menu dropdown
+function UserMenu({ username, onSignOut }: { username: string; onSignOut: () => Promise<void> }) {
+    const handleSignOut = async () => {
+        try {
+            await onSignOut();
+        } catch (error) {
+            console.error('Error during sign out:', error);
+        }
+    };
+
+    return (
+        <Menu>
+            <MenuButton as={ChakraLink} color="blue.500" _hover={{ textDecoration: "underline" }}>
+                {username}
+            </MenuButton>
+            <MenuList minW="100px" p={0}>
+                <MenuItem fontSize="sm" onClick={handleSignOut} px={3} py={2} justifyContent="center">Sign Out</MenuItem>
+            </MenuList>
+        </Menu>
     );
 }

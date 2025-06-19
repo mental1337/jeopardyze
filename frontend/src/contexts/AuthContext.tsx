@@ -166,12 +166,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    const logout = () => {
+    const logout = async () => {
+        // Clear current user data
         setToken(null);
         setUser(null);
         setIsGuest(false);
         setGuestId(null);
         localStorage.removeItem('token');
+
+        // Create new guest session
+        try {
+            await createGuestSession();
+        } catch (error) {
+            console.error('Failed to create guest session after logout:', error);
+        }
     };
 
     return (

@@ -31,9 +31,10 @@ export default function CreateFromText() {
             // Navigate to the game session page
             navigate(`/play/${response.data.game_session_id}`)
         } catch (error: any) {
+            const errorMessageFromServer = error.response?.data?.detail ?? ""
             toast({
                 title: 'Error',
-                description: 'Failed to create quiz board',
+                description: `Failed to create quiz board. Server response: ${errorMessageFromServer}`,
                 status: 'error',
                 duration: 3000,
                 isClosable: true,
