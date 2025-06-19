@@ -8,7 +8,7 @@ export interface RegisterRequest {
     username: string;
     email: string;
     password: string;
-    guest_session_token?: string;
+    guest_id?: string;
 }
 
 export interface VerifyEmailRequest {
@@ -38,6 +38,6 @@ export interface VerifyEmailResponse {
     email: string;
 }
 
-export interface GuestSessionResponse {
+export interface GuestResponse {
     access_token: string;
 } 

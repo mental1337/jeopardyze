@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.logging import logger
 from app.core.database import get_db
 from app.core.auth import get_current_user
-from app.models import Question, QuizBoard, User, GameSession, GuestSession
+from app.models import Question, QuizBoard, User, GameSession, Guest
 from app.schemas import GameSessionResponse, AnswerQuestionResponse, AnswerQuestionRequest
 from app.services.game_sessions_service import GameSessionsService
 
@@ -19,7 +19,7 @@ router = APIRouter(
 async def get_existing_game_session(
     quiz_board_id: int = Query(..., description="ID of the quiz board"),
     user_id: Optional[int] = Query(None, description="ID of the user"),
-    guest_session_id: Optional[int] = Query(None, description="ID of the guest session"),
+    guest_id: Optional[int] = Query(None, description="ID of the guest"),
     db: Session = Depends(get_db)
 ) -> Dict:
     """
@@ -38,12 +38,12 @@ async def get_existing_game_session(
 
     if user_id is not None:
         query = query.filter(GameSession.user_id == user_id)
-    elif guest_session_id is not None:
-        query = query.filter(GameSession.guest_session_id == guest_session_id)
+    elif guest_id is not None:
+        query = query.filter(GameSession.guest_id == guest_id)
     else:
         raise HTTPException(
             status_code=400,
-            detail="Either user_id or guest_session_id must be provided"
+            detail="Either user_id or guest_id must be provided"
         )
 
     # Get the most recent session if multiple exist

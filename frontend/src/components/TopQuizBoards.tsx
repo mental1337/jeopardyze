@@ -41,14 +41,14 @@ export default function TopQuizBoards() {
     const handleQuizBoardClick = async (boardId: number) => {
         try {
             let userId: number | null = null;
-            let guestSessionId: number | null = null;
+            let guestId: number | null = null;
 
             // If user is not logged in and not a guest, create a guest session
             if (!token) {
                 const guestToken = await createGuestSession();
-                // Decode the JWT token to get the guest session ID
+                // Decode the JWT token to get the guest ID
                 const payload = JSON.parse(atob(guestToken.split('.')[1]));
-                guestSessionId = parseInt(payload.session_id);
+                guestId = parseInt(payload.guest_id);
             } else if (user) {
                 userId = user.id;
             }
@@ -58,7 +58,7 @@ export default function TopQuizBoards() {
                 params: {
                     quiz_board_id: boardId,
                     user_id: userId,
-                    guest_session_id: guestSessionId
+                    guest_id: guestId
                 }
             });
 

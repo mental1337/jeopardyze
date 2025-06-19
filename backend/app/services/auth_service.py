@@ -4,10 +4,9 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
-import secrets
 
 from app.models.user import User
-from app.models.guest_session import GuestSession
+from app.models.guest import Guest
 from app.core.config import settings, secrets
 
 # Password hashing
@@ -32,22 +31,17 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 def create_guest_session(db: Session) -> str:
-    # Generate a secure random token
-    session_token = secrets.token_urlsafe(32)
-    
     # Create guest session
-    guest_session = GuestSession(
-        session_token=session_token
-    )
-    db.add(guest_session)
+    guest = Guest()
+    db.add(guest)
     db.commit()
-    db.refresh(guest_session)
+    db.refresh(guest)
     
     # Create JWT token
     token = create_access_token(
         data={
             "sub": "guest",
-            "session_id": str(guest_session.id)
+            "guest_id": str(guest.id)
         }
     )
     

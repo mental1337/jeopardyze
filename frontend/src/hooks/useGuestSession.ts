@@ -1,13 +1,14 @@
+import { useCallback } from 'react';
+import { GuestResponse } from '../types/auth_types';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/axios';
-import { GuestSessionResponse } from '../types/auth_types';
 
 export function useGuestSession() {
     const { setToken, setIsGuest } = useAuth();
 
-    const createGuestSession = async () => {
+    const createGuestSession = useCallback(async () => {
         try {
-            const { data } = await api.post<GuestSessionResponse>('/auth/guest-session');
+            const { data } = await api.post<GuestResponse>('/auth/guest-session');
             setToken(data.access_token);
             setIsGuest(true);
             return data.access_token;
@@ -15,7 +16,7 @@ export function useGuestSession() {
             console.error('Failed to create guest session:', error);
             throw error;
         }
-    };
+    }, [setToken, setIsGuest]);
 
     return { createGuestSession };
 } 

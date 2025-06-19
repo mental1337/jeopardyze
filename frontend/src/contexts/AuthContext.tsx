@@ -1,17 +1,20 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { LoginResponse, GuestSessionResponse } from '../types/auth_types';
+import { LoginResponse, GuestResponse } from '../types/auth_types';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api from '../lib/axios';
+
+interface User {
+    id: number;
+    username: string;
+    email: string;
+}
 
 interface AuthContextType {
     token: string | null;
+    user: User | null;
     isGuest: boolean;
-    user: {
-        id: number | null;
-        username: string | null;
-        email: string | null;
-    } | null;
     setToken: (token: string | null) => void;
+    setUser: (user: User | null) => void;
     setIsGuest: (isGuest: boolean) => void;
-    setUser: (user: { id: number; username: string; email: string; } | null) => void;
     logout: () => void;
 }
 
@@ -19,50 +22,52 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-    const [isGuest, setIsGuest] = useState<boolean>(localStorage.getItem('isGuest') === 'true');
-    const [user, setUser] = useState<{ id: number; username: string; email: string; } | null>(() => {
-        const storedUser = localStorage.getItem('user');
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
+    const [user, setUser] = useState<User | null>(null);
+    const [isGuest, setIsGuest] = useState<boolean>(false);
 
-    const handleSetToken = (newToken: string | null) => {
-        setToken(newToken);
-        if (newToken) {
-            localStorage.setItem('token', newToken);
+    useEffect(() => {
+        if (token) {
+            localStorage.setItem('token', token);
+            // Check if token is for a guest or user
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.sub === 'guest') {
+                    setIsGuest(true);
+                    setUser(null);
+                } else {
+                    setIsGuest(false);
+                    // For user tokens, you might want to fetch user info here
+                    // or include it in the token payload
+                    // TODO: fetch user info here
+                }
+            } catch (error) {
+                console.error('Error parsing token:', error);
+                setToken(null);
+                setIsGuest(false);
+            }
         } else {
             localStorage.removeItem('token');
+            setIsGuest(false);
+            setUser(null);
         }
-    };
-
-    const handleSetIsGuest = (newIsGuest: boolean) => {
-        setIsGuest(newIsGuest);
-        localStorage.setItem('isGuest', String(newIsGuest));
-    };
-
-    const handleSetUser = (newUser: { id: number; username: string; email: string; } | null) => {
-        setUser(newUser);
-        if (newUser) {
-            localStorage.setItem('user', JSON.stringify(newUser));
-        } else {
-            localStorage.removeItem('user');
-        }
-    };
+    }, [token]);
 
     const logout = () => {
-        handleSetToken(null);
-        handleSetIsGuest(false);
-        handleSetUser(null);
+        setToken(null);
+        setUser(null);
+        setIsGuest(false);
+        localStorage.removeItem('token');
     };
 
     return (
         <AuthContext.Provider value={{
             token,
-            isGuest,
             user,
-            setToken: handleSetToken,
-            setIsGuest: handleSetIsGuest,
-            setUser: handleSetUser,
-            logout,
+            isGuest,
+            setToken,
+            setUser,
+            setIsGuest,
+            logout
         }}>
             {children}
         </AuthContext.Provider>

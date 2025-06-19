@@ -34,6 +34,7 @@ def verify_code(email: str, code: str) -> bool:
     if email not in verification_codes:
         return False
     
+    # TODO: Don't use expiry. Stored verification code in database.
     stored_data = verification_codes[email]
     if datetime.now(timezone.utc) > stored_data['expires_at']:
         del verification_codes[email]

@@ -42,7 +42,7 @@ erDiagram
     QuizBoard ||--o{ GameSession : played_in
     User ||--o{ GameSession : plays
     GameSession ||--o{ QuestionAttempt : tracks
-    GuestSession ||--o{ GameSession : plays
+    Guest ||--o{ GameSession : plays
 
     QuizBoard {
         int id PK
@@ -70,7 +70,7 @@ erDiagram
         int id PK
         int quiz_board_id FK
         int user_id FK
-        int guest_session_id FK
+        int guest_id FK
         int total_score
         datetime started_at
         datetime completed_at
@@ -98,9 +98,8 @@ erDiagram
         boolean is_active
     }
 
-    GuestSession {
+    Guest {
         int id PK
-        string session_token
         datetime created_at
         int converted_to_user_id FK
     }
@@ -228,7 +227,7 @@ erDiagram
         "username": "string",
         "email": "string",
         "password": "string",
-        "guest_session_token": "string"  # Optional
+        "guest_id": "string"  # Optional
     }
     ```
   - Response:

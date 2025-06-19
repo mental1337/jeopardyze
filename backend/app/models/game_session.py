@@ -8,7 +8,7 @@ class GameSession(MyBaseModel):
     
     quiz_board_id = Column(Integer, ForeignKey("quiz_boards.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    guest_session_id = Column(Integer, ForeignKey("guest_sessions.id"), nullable=True)
+    guest_id = Column(Integer, ForeignKey("guests.id"), nullable=True)
     score = Column(Integer, default=0)
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime, nullable=True)
@@ -17,7 +17,7 @@ class GameSession(MyBaseModel):
     # Relationships
     quiz_board = relationship("QuizBoard", back_populates="game_sessions")
     user = relationship("User", back_populates="game_sessions")
-    guest_session = relationship("GuestSession", back_populates="game_sessions")
+    guest = relationship("Guest", back_populates="game_sessions")
     question_attempts = relationship("QuestionAttempt", back_populates="game_session")
     
     def __repr__(self):

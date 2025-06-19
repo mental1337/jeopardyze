@@ -6,10 +6,10 @@ import axios from "axios";
 interface SignupBarProps {
     onClose: () => void;
     onRegisterSuccess: (response: RegisterResponse) => void;
-    guestSessionToken?: string;
+    guestId?: string;
 }
 
-export default function SignupBar({ onClose, onRegisterSuccess, guestSessionToken }: SignupBarProps) {
+export default function SignupBar({ onClose, onRegisterSuccess, guestId }: SignupBarProps) {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -25,7 +25,7 @@ export default function SignupBar({ onClose, onRegisterSuccess, guestSessionToke
                 username,
                 email,
                 password,
-                guest_session_token: guestSessionToken,
+                guest_id: guestId,
             };
 
             const { data } = await axios.post<RegisterResponse>(

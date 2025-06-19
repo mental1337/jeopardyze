@@ -22,7 +22,7 @@ from .auth import (
     RegisterResponse,
     VerifyEmailRequest,
     VerifyEmailResponse,
-    GuestSessionResponse
+    GuestResponse
 )
 
 # This allows you to import directly from schemas like:
