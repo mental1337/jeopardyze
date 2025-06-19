@@ -1,6 +1,6 @@
 import { Box, Flex, Grid, GridItem, Spacer, Text, useDisclosure } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../lib/axios';
 import QuestionModal from './QuestionModal';
 import QuestionTile from './QuestionTile';
 import { Question, Category, GameSessionResponse} from '../types/game_session_types';
@@ -21,7 +21,9 @@ export default function QuizGrid({ gameSessionId }: QuizGridProps) {
             try {
                 console.log(`Fetching game session ${gameSessionId}`)
                 // const response = await axios.get(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
-                const response = await axios.get<GameSessionResponse>(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                // const response = await axios.get<GameSessionResponse>(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                // const response = await api.get(`/game-sessions/${gameSessionId}`);
+                const response = await api.get<GameSessionResponse>(`/game-sessions/${gameSessionId}`);
                 // Now TypeScript knows the shape of response.data to be GameSessionResponse, and autocomplete helps
 
                 console.log(`Received response: ${response.data}`)

@@ -12,7 +12,7 @@ import {
     useToast,
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../lib/axios';
 import { Question, AnswerQuestionResponse } from '../types/game_session_types';
 
 interface QuestionModalProps {
@@ -41,8 +41,8 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
         
         setIsSubmitting(true);
         try {
-            const response = await axios.post<AnswerQuestionResponse>(
-                `http://localhost:8000/api/game-sessions/${gameSessionId}/answer-question/${question.question_id}`,
+            const response = await api.post<AnswerQuestionResponse>(
+                `/game-sessions/${gameSessionId}/answer-question/${question.question_id}`,
                 { answer: answer }
             );            
             // ^ Note that { answer: answer } is not the same as { "answer": answer }

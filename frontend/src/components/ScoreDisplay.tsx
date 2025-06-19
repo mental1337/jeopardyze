@@ -1,6 +1,6 @@
 import { Box, Text } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../lib/axios';
 
 interface ScoreDisplayProps {
     gameSessionId: string;
@@ -12,7 +12,7 @@ export default function ScoreDisplay({ gameSessionId }: ScoreDisplayProps) {
     useEffect(() => {
         const fetchScore = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/game-sessions/${gameSessionId}`);
+                const response = await api.get(`/game-sessions/${gameSessionId}`);
                 setScore(response.data.total_score);
             } catch (error) {
                 console.error('Failed to fetch score:', error);
