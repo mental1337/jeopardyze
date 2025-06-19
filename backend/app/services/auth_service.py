@@ -16,7 +16,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # JWT settings
 SECRET_KEY = secrets.JWT_SECRET_KEY
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
@@ -24,9 +23,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict, expire_minutes: int) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -44,7 +43,8 @@ def create_guest_session(db: Session) -> str:
         data={
             "sub": "guest",
             "guest_id": str(guest.id)
-        }
+        },
+        expire_minutes=60*24*30 # 30 days
     )
     
     return token
@@ -56,7 +56,8 @@ def create_user_access_token(user: User) -> str:
             "sub": str(user.id),
             "username": user.username,
             "email": user.email
-        }
+        },
+        expire_minutes=60*24*7 # 7 days
     )
 
 def authenticate_user(db: Session, username_or_email: str, password: str) -> Optional[User]:

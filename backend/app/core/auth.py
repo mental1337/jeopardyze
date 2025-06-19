@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.guest import Guest
 from app.core.database import get_db
 from app.services.auth_service import SECRET_KEY, ALGORITHM
+from app.core.logging import logger
 
 # Create a union type for authenticated entities
 AuthenticatedEntity = Union[User, Guest]
@@ -23,7 +24,9 @@ async def get_current_user_or_guest(
     Get the current authenticated user or guest from the JWT token.
     Returns None if no valid token is provided (for optional authentication).
     """
+    logger.info(f"Getting current user or guest from credentials: {credentials}")
     if not credentials:
+        logger.info("No credentials provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No authentication token provided",
@@ -32,26 +35,50 @@ async def get_current_user_or_guest(
     
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        logger.info(f"Decoded payload: {payload}")
         subject = payload.get("sub")
         
         if subject == "guest":
             # Handle guest authentication
             guest_id = payload.get("guest_id")
             if not guest_id:
-                return None
-            
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid guest token: missing guest_id",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
             guest = db.query(Guest).filter(Guest.id == int(guest_id)).first()
+            if not guest:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Guest not found in database",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
             return guest
         else:
             # Handle user authentication
             user_id = payload.get("sub")
             if not user_id:
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid user token: missing user_id",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             
             user = db.query(User).filter(User.id == int(user_id)).first()
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found in database",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
             return user
             
-    except JWTError:
+    except JWTError as e:
+        logger.error("JWT Error while parsing token. Invalid token. Exception: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",

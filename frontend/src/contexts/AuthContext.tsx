@@ -149,6 +149,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [token]);
 
+    // Listen for user token expiration events from axios interceptor
+    useEffect(() => {
+        const handleUserTokenExpired = () => {
+            console.log('AuthContext: User token expired, updating state');
+            setToken(null);
+            setUser(null);
+            setIsGuest(false);
+            setGuestId(null);
+        };
+
+        window.addEventListener('userTokenExpired', handleUserTokenExpired);
+        
+        return () => {
+            window.removeEventListener('userTokenExpired', handleUserTokenExpired);
+        };
+    }, []);
+
     const logout = () => {
         setToken(null);
         setUser(null);

@@ -1,6 +1,6 @@
 import { Box, Text, Flex, Heading, HStack, Spacer, Link as ChakraLink } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SigninBar from "./SigninBar";
 import SignupBar from "./SignupBar";
 import { useAuth } from "../contexts/AuthContext";
@@ -10,6 +10,21 @@ export default function Navbar() {
     const [showSignin, setShowSignin] = useState(false);
     const [showSignup, setShowSignup] = useState(false);
     const { token, isGuest, user, isLoading, guestId, handleLoginSuccess, handleVerifyEmailSuccess } = useAuth();
+    
+    // Listen for user token expiration events
+    useEffect(() => {
+        const handleUserTokenExpired = () => {
+            console.log('User token expired event received, showing login modal');
+            setShowSignin(true);
+            setShowSignup(false);
+        };
+
+        window.addEventListener('userTokenExpired', handleUserTokenExpired);
+        
+        return () => {
+            window.removeEventListener('userTokenExpired', handleUserTokenExpired);
+        };
+    }, []);
     
     // Handle successful registration (just close the form)
     const handleRegisterSuccess = (response: RegisterResponse) => {
