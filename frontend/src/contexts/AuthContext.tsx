@@ -1,5 +1,5 @@
 import { LoginResponse, GuestResponse, VerifyEmailResponse } from '../types/auth_types';
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import api from '../lib/axios';
 
 interface User {
@@ -31,10 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isGuest, setIsGuest] = useState<boolean>(false);
     const [guestId, setGuestId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const hasInitialized = useRef(false);
 
     // Function to create a guest session
     const createGuestSession = async () => {
         try {
+            console.log("Creating guest session by calling /auth/guest-session");
             const { data } = await api.post<GuestResponse>('/auth/guest-session');
             const guestToken = data.access_token;
             setToken(guestToken);
@@ -106,6 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const initializeAuth = async () => {
+            // Prevent multiple initializations
+            if (hasInitialized.current) {
+                return;
+            }
+            
+            hasInitialized.current = true;
             setIsLoading(true);
             
             if (token) {

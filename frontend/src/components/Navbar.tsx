@@ -34,6 +34,9 @@ export default function Navbar() {
     }
 
     const isLoggedIn = !isGuest && user !== null;
+    
+    // Determine the name to display
+    const displayName = isLoggedIn ? user?.username : `Guest-${guestId}`;
 
     return (
         <Box bg="gray.300" borderRadius={10}>
@@ -46,13 +49,12 @@ export default function Navbar() {
                 <Spacer />
                 
                 <Spacer />
-                {isLoggedIn ? (
-                    <Box>
-                        <Text>Welcome, {user?.username}!</Text>
-                        <Link to="/profile">Profile</Link>
-                    </Box>
-                ) : (
-                    <HStack spacing={2}>
+                <Box>
+                    <Text>Hi {displayName}!</Text>
+                    {isLoggedIn && <Link to="/profile">Profile</Link>}
+                </Box>
+                {!isLoggedIn && (
+                    <HStack spacing={2} ml={4}>
                         <ChakraLink 
                             onClick={() => {
                                 setShowSignin(true);

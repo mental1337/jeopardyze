@@ -52,6 +52,20 @@ def recreate_guests_table():
     print("Guests table has been recreated successfully!")
 
 
+def recreate_game_sessions_table():
+    """Drop and recreate the game_sessions table."""
+    print("Recreating game_sessions table")
+    from app.models.game_session import GameSession
+    
+    # Drop the existing table
+    GameSession.__table__.drop(engine, checkfirst=True)
+    
+    # Create the new table
+    GameSession.__table__.create(engine)
+    
+    print("Game sessions table has been recreated successfully!")
+
+
 ## Run as `python -m app.core.database --action create_tables` or `python -m app.core.database --action recreate_users_table`
 if __name__ == "__main__":
     import argparse
@@ -59,9 +73,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Database management script.")
     parser.add_argument(
         "--action",
-        choices=["create_tables", "recreate_users_table", "recreate_guests_table"],
+        choices=["create_tables", "recreate_users_table", "recreate_guests_table", "recreate_game_sessions_table"],
         required=True,
-        help="The action to perform: 'create_tables', 'recreate_users_table', or 'recreate_guests_table'."
+        help="The action to perform: 'create_tables', 'recreate_users_table', 'recreate_guests_table', or 'recreate_game_sessions_table'."
     )
     args = parser.parse_args()
 
@@ -73,3 +87,5 @@ if __name__ == "__main__":
         recreate_users_table()
     elif args.action == "recreate_guests_table":
         recreate_guests_table()
+    elif args.action == "recreate_game_sessions_table":
+        recreate_game_sessions_table()

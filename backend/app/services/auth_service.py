@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.models.guest import Guest
 from app.core.config import settings, secrets
+from app.core.logging import logger
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -36,7 +37,8 @@ def create_guest_session(db: Session) -> str:
     db.add(guest)
     db.commit()
     db.refresh(guest)
-    
+    logger.info("Created guest session with id: %s", guest.id)
+
     # Create JWT token
     token = create_access_token(
         data={
