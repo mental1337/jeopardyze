@@ -1,7 +1,7 @@
 import { Box, Heading, Text, Button, useToast } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../lib/axios'
 
 export default function CreateFromText() {
     const [topic, setTopic] = useState('')
@@ -26,11 +26,11 @@ export default function CreateFromText() {
             const formData = new FormData()
             formData.append('topic', topic)
 
-            const response = await axios.post('http://localhost:8000/api/quiz-boards/from-topic', formData)
+            const response = await api.post('/quiz-boards/from-topic', formData)
             
             // Navigate to the game session page
             navigate(`/play/${response.data.game_session_id}`)
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 title: 'Error',
                 description: 'Failed to create quiz board',

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Form, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user_required, AuthenticatedEntity, get_user_id
 from app.core.logging import logger
 from app.models import QuizBoard, User
 from app.schemas import QuizBoardPydanticModel, TopQuizBoardsResponse, QuizBoardPydanticModel
@@ -35,10 +35,15 @@ async def get_all_quiz_boards(db: Session = Depends(get_db), search: Optional[st
 async def create_quiz_board_from_topic(
     topic: str = Form(...),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    current_user: AuthenticatedEntity = Depends(get_current_user_required)
 ) -> Dict:
-    quiz_board = QuizBoardService.create_from_topic(topic, user.id, db)
-    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user.id, db)
+    # Only users can create quiz boards, not guests
+    user_id = get_user_id(current_user)
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="Only authenticated users can create quiz boards")
+    
+    quiz_board = QuizBoardService.create_from_topic(topic, user_id, db)
+    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user_id, None, db)
     
     return {
         "game_session_id": game_session.id

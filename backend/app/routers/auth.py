@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.services.auth_service import create_access_token, authenticate_user, create_guest_session, get_password_hash
+from app.services.auth_service import create_access_token, authenticate_user, create_guest_session, get_password_hash, create_user_access_token
 from app.services.email_verify_service import verify_code, send_verification_email
 from app.models.user import User
 from app.schemas.auth import (
@@ -93,10 +93,8 @@ async def verify_email(
     user.is_verified = True
     db.commit()
     
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": str(user.id)}
-    )
+    # Create access token using the new function
+    access_token = create_user_access_token(user)
     
     return VerifyEmailResponse(
         access_token=access_token,
@@ -119,14 +117,8 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token
-    token = create_access_token(
-        data={
-            "sub": str(user.id),
-            "username": user.username,
-            "email": user.email
-        }
-    )
+    # Create access token using the new function
+    token = create_user_access_token(user)
     
     return LoginResponse(
         access_token=token,

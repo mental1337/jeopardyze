@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.logging import logger
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, AuthenticatedEntity, get_user_id, get_guest_id, get_current_user_required
 from app.models import Question, QuizBoard, User, GameSession, Guest
 from app.schemas import GameSessionResponse, AnswerQuestionResponse, AnswerQuestionRequest
 from app.services.game_sessions_service import GameSessionsService
@@ -72,25 +72,32 @@ async def get_game_session(game_session_id: int, db: Session = Depends(get_db)) 
 async def create_game_session_from_quiz_board(
     quiz_board_id: int,
     db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[AuthenticatedEntity] = Depends(get_current_user)
 ) -> Dict:
     quiz_board = db.query(QuizBoard).filter(QuizBoard.id == quiz_board_id).first()
     if not quiz_board:
         logger.error(f"Couldn't create Game Session because Quiz board with id '{quiz_board_id}' not found")
         raise HTTPException(status_code=404, detail="Couldn't create Game Session because Quiz board with id '{quiz_board_id}' not found")
 
-    # Get user_id from the user object if it exists
-    user_id = user.id if user else None
+    # Extract user_id or guest_id from the authenticated entity
+    user_id = get_user_id(current_user) if current_user else None
+    guest_id = get_guest_id(current_user) if current_user else None
     
-    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user_id, db)
+    game_session = GameSessionsService.create_from_quiz_board(quiz_board, user_id, guest_id, db)
     return {
         "game_session_id": game_session.id
     }
 
 
 @router.post("/{game_session_id}/answer-question/{question_id}", response_model=AnswerQuestionResponse)
-async def answer_question(game_session_id: int, question_id: int, answer_request: AnswerQuestionRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> AnswerQuestionResponse:
+async def answer_question(
+    game_session_id: int, 
+    question_id: int, 
+    answer_request: AnswerQuestionRequest, 
+    db: Session = Depends(get_db), 
+    current_user: AuthenticatedEntity = Depends(get_current_user_required)
+) -> AnswerQuestionResponse:
     logger.info(f"Answering question '{question_id}' for game session '{game_session_id}' with answer: '{answer_request.answer}'")
-    response = GameSessionsService.answer_question(game_session_id, question_id, answer_request.answer, db, user)
+    response = GameSessionsService.answer_question(game_session_id, question_id, answer_request.answer, db, current_user)
     logger.info(f"Response: '{response}'")
     return response

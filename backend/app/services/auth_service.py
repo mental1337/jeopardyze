@@ -47,6 +47,16 @@ def create_guest_session(db: Session) -> str:
     
     return token
 
+def create_user_access_token(user: User) -> str:
+    """Create a JWT token for an authenticated user."""
+    return create_access_token(
+        data={
+            "sub": str(user.id),
+            "username": user.username,
+            "email": user.email
+        }
+    )
+
 def authenticate_user(db: Session, username_or_email: str, password: str) -> Optional[User]:
     # Try to find user by username or email
     user = db.query(User).filter(

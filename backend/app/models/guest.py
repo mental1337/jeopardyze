@@ -8,7 +8,7 @@ class Guest(MyBaseModel):
     
     created_at = Column(DateTime, default=datetime.now)
     converted_to_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-
+    
     # Relationships
     converted_to_user = relationship("User", back_populates="guests")
     game_sessions = relationship("GameSession", back_populates="guest")
