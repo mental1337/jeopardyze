@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.services.auth_service import get_password_hash
-from app.services.email_verify_service import send_verification_email, verification_codes
+from app.services.email_verify_service import send_verification_email
 
 @pytest.fixture
 def test_user(db: Session) -> User:
@@ -58,9 +58,6 @@ def test_login_nonexistent_user(client: TestClient):
 
 def test_register_success(client: TestClient, db: Session):
     print("Running test_register_success")
-
-    # Clear any existing verification codes
-    verification_codes.clear()
     
     # Test data
     user_data = {
@@ -86,8 +83,9 @@ def test_register_success(client: TestClient, db: Session):
     assert user.username == user_data["username"]
     assert not user.is_verified
     
-    # Verify verification code was generated
-    assert user_data["email"] in verification_codes
+    # Verify verification code was generated and stored in database
+    assert user.verification_code is not None
+    assert len(user.verification_code) == 6
 
 def test_register_duplicate_username(client: TestClient, test_user: User):
     # Try to register with same username
@@ -114,9 +112,6 @@ def test_register_duplicate_email(client: TestClient, test_user: User):
     assert "Email is already registered" in response.json()["detail"]
 
 def test_verify_email_success(client: TestClient, db: Session):
-    # Clear any existing verification codes
-    verification_codes.clear()
-    
     # Create an unverified user
     user = User(
         username="verifyuser",
@@ -128,7 +123,7 @@ def test_verify_email_success(client: TestClient, db: Session):
     db.commit()
     
     # Generate verification code
-    code = send_verification_email(user.email)
+    code = send_verification_email(db, user.email)
     
     # Verify email
     verify_data = {
@@ -139,15 +134,13 @@ def test_verify_email_success(client: TestClient, db: Session):
     response = client.post("/api/auth/verify-email", json=verify_data)
     assert response.status_code == 200
     data = response.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
-    assert data["user_id"] == user.id
-    assert data["username"] == user.username
-    assert data["email"] == user.email
+    assert data["message"] == "Email verified successfully"
     
     # Verify user is now verified
     db.refresh(user)
     assert user.is_verified
+    # Verify code was cleared after successful verification
+    assert user.verification_code is None
 
 def test_verify_email_wrong_code(client: TestClient, db: Session):
     # Create an unverified user
@@ -161,7 +154,7 @@ def test_verify_email_wrong_code(client: TestClient, db: Session):
     db.commit()
     
     # Generate verification code
-    send_verification_email(user.email)
+    send_verification_email(db, user.email)
     
     # Try to verify with wrong code
     verify_data = {
@@ -171,11 +164,13 @@ def test_verify_email_wrong_code(client: TestClient, db: Session):
     
     response = client.post("/api/auth/verify-email", json=verify_data)
     assert response.status_code == 400
-    assert "Invalid or expired verification code" in response.json()["detail"]
+    assert "Invalid verification code" in response.json()["detail"]
     
     # Verify user is still unverified
     db.refresh(user)
     assert not user.is_verified
+    # Verify code was not cleared after failed verification
+    assert user.verification_code is not None
 
 def test_verify_email_nonexistent_user(client: TestClient):
     verify_data = {
@@ -184,5 +179,5 @@ def test_verify_email_nonexistent_user(client: TestClient):
     }
     
     response = client.post("/api/auth/verify-email", json=verify_data)
-    assert response.status_code == 404
+    assert response.status_code == 400
     assert "User not found" in response.json()["detail"] 

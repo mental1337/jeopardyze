@@ -4,14 +4,14 @@ from app.models.quiz_board import QuizBoard
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
-from app.models import Category, GameSession, Question, User
+from app.models import Category, GameSession, Question, Player
 from app.services.llm_service import LLMService
 from app.schemas.quiz_board import TopQuizBoardsResponse, TopQuizBoardModel
 
 
 class QuizBoardService:
     @staticmethod
-    def create_from_topic(topic: str, user_id: int, db: Session) -> QuizBoard:
+    def create_from_topic(topic: str, player_id: int, db: Session) -> QuizBoard:
         # Check if the same topic already exists in the database
         quiz_board = db.query(QuizBoard).filter(QuizBoard.source_content == topic).first()
         if quiz_board:
@@ -51,7 +51,7 @@ class QuizBoardService:
                 title=quiz_data["title"],
                 source_type="topic",
                 source_content=topic,
-                created_by_user_id=user_id
+                created_by_player_id=player_id
             )
             
             # Add quiz data to the database
@@ -107,7 +107,7 @@ class QuizBoardService:
                 db.query(
                     GameSession.quiz_board_id,
                     GameSession.score,
-                    GameSession.user_id,
+                    GameSession.player_id,
                     GameSession.completed_at,
                     func.row_number().over(
                         partition_by=GameSession.quiz_board_id,
@@ -126,7 +126,7 @@ class QuizBoardService:
                     QuizBoard,
                     func.count(GameSession.id).label('total_sessions'),
                     top_scores.c.score.label('top_score'),
-                    User.username.label('top_scorer')
+                    Player.display_name.label('top_scorer')
                 )
                 .outerjoin(GameSession, QuizBoard.id == GameSession.quiz_board_id)
                 .outerjoin(
@@ -135,10 +135,10 @@ class QuizBoardService:
                     (top_scores.c.rn == 1)  # Only get the top score
                 )
                 .outerjoin(
-                    User,
-                    User.id == top_scores.c.user_id
+                    Player,
+                    Player.id == top_scores.c.player_id
                 )
-                .group_by(QuizBoard.id, User.username, top_scores.c.score)
+                .group_by(QuizBoard.id, Player.display_name, top_scores.c.score)
                 .order_by(desc('total_sessions'))
                 .limit(limit)
                 .offset(offset)
@@ -148,11 +148,14 @@ class QuizBoardService:
             # Convert to response model
             top_quiz_boards = []
             for quiz_board, total_sessions, top_score, top_scorer in quiz_boards:
+                # Get creator display name
+                creator_display_name = quiz_board.created_by_player.display_name
+                
                 top_quiz_boards.append(
                     TopQuizBoardModel(
                         id=quiz_board.id,
                         title=quiz_board.title,
-                        creator=quiz_board.created_by_user.username,
+                        creator=creator_display_name,
                         total_sessions=total_sessions or 0,
                         top_score=top_score or 0,
                         top_scorer=top_scorer or "-",

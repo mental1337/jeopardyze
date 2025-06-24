@@ -24,13 +24,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def create_access_token(data: dict, expire_minutes: int) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
 def create_guest(db: Session) -> Player:
     # Create guest session
     guest = Guest()
@@ -40,7 +33,8 @@ def create_guest(db: Session) -> Player:
     # Create player profile for the guest
     player = Player(
         player_type=PlayerType.GUEST,
-        guest_id=guest.id
+        guest_id=guest.id,
+        display_name=guest.guest_name
     )
     db.add(player)
     db.commit()
@@ -51,16 +45,13 @@ def create_guest(db: Session) -> Player:
     
     return player
 
-# def create_user_access_token(user: User) -> str:
-#     """Create a JWT token for an authenticated user."""
-#     return create_access_token(
-#         data={
-#             "sub": str(user.id),
-#             "username": user.username,
-#             "email": user.email
-#         },
-#         expire_minutes=60*24*7 # 7 days
-#     )
+
+def create_access_token(data: dict, expire_minutes: int) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 def create_player_token(player: Player) -> str:
     return create_access_token(
@@ -103,34 +94,12 @@ def authenticate_user(db: Session, username_or_email: str, password: str) -> Opt
     ensure_player_exists(db, user)
     return user
 
-def get_current_user_from_token(token: str, db: Session) -> User:
-    """Get the current user from a JWT token. For backward compatibility."""
-    player = get_current_player_from_token(token, db)
-    
-    # Ensure this is a user player, not a guest
-    if player.player_type != PlayerType.USER:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token is for guest user, not authenticated user",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Get the associated user
-    user = db.query(User).filter(User.id == player.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    return user
 
 def get_current_player_from_token(token: str, db: Session) -> Player:
     """Get the current player from a JWT token (handles both user and guest tokens)."""
-    credentials_exception = HTTPException(
+    invalid_player_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Invalid player",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -139,8 +108,9 @@ def get_current_player_from_token(token: str, db: Session) -> Player:
         player_type = payload.get("player_type")
         
         if not player_id or not player_type:
-            raise credentials_exception
-            
+            logger.error("Invalid player token. No player_id or player_type found.")
+            raise Exception("Invalid player token. No player_id or player_type found.")
+        
         # Find player by ID and type
         player = db.query(Player).filter(
             Player.id == int(player_id),
@@ -148,9 +118,12 @@ def get_current_player_from_token(token: str, db: Session) -> Player:
         ).first()
             
         if not player:
-            raise credentials_exception
-        return player
+            logger.error("Invalid player token. Player not found.")
+            raise Exception("Invalid player token. Player not found.")
         
-    except JWTError:
-        raise credentials_exception
+        return player
+    except JWTError as e:
+        logger.error("JWT Error while parsing token. Exception: %s", e)
+        raise e
+
 

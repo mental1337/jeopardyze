@@ -13,7 +13,6 @@ interface AuthContextType {
     player: Player | null;
     isLoading: boolean;
     setToken: (token: string | null) => void;
-    setPlayer: (player: Player | null) => void;
     handleLoginSuccess: (response: LoginResponse) => void;
     handleVerifyEmailSuccess: (response: VerifyEmailResponse) => void;
     handleGuestSuccess: (response: GuestResponse) => void;
@@ -22,27 +21,58 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to parse player data from JWT token
+const parsePlayerFromToken = (token: string): Player | null => {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Parsed token payload:', payload);
+        if (payload.player_id && payload.player_type && payload.display_name) {
+            const player = {
+                id: parseInt(payload.player_id),
+                player_type: payload.player_type,
+                display_name: payload.display_name
+            };
+            console.log('Extracted player data:', player);
+            return player;
+        }
+        console.log('Missing required fields in token payload');
+        return null;
+    } catch (error) {
+        console.error('Error parsing token:', error);
+        return null;
+    }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+    const [token, setTokenState] = useState<string | null>(localStorage.getItem('token'));
     const [player, setPlayer] = useState<Player | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const hasInitialized = useRef(false);
+
+    // Function to set token and automatically update player data
+    const setToken = (newToken: string | null) => {
+        console.log('setToken called with:', newToken ? 'new token' : 'null');
+        setTokenState(newToken);
+        
+        if (newToken) {
+            const playerData = parsePlayerFromToken(newToken);
+            console.log('Setting player data from token:', playerData);
+            setPlayer(playerData);
+            localStorage.setItem('token', newToken);
+        } else {
+            console.log('Clearing player data');
+            setPlayer(null);
+            localStorage.removeItem('token');
+        }
+    };
 
     // Function to create a guest session
     const createGuestSession = async () => {
         try {
             console.log("Creating guest session by calling /auth/guest");
             const { data } = await api.post<GuestResponse>('/auth/guest');
-            const guestToken = data.access_token;
-            setToken(guestToken);
-            setPlayer({
-                id: data.player_id,
-                player_type: 'guest',
-                display_name: data.display_name
-            });
-            
-            localStorage.setItem('token', guestToken);
-            return guestToken;
+            setToken(data.access_token);
+            return data.access_token;
         } catch (error) {
             console.error('Failed to create guest session:', error);
             throw error;
@@ -52,53 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Function to handle successful login
     const handleLoginSuccess = (response: LoginResponse) => {
         setToken(response.access_token);
-        setPlayer({
-            id: response.player_id,
-            player_type: 'user',
-            display_name: response.display_name
-        });
-        localStorage.setItem('token', response.access_token);
     };
 
     // Function to handle successful email verification
     const handleVerifyEmailSuccess = (response: VerifyEmailResponse) => {
         setToken(response.access_token);
-        setPlayer({
-            id: response.player_id,
-            player_type: 'user',
-            display_name: response.display_name
-        });
-        localStorage.setItem('token', response.access_token);
     };
 
     // Function to handle successful guest creation
     const handleGuestSuccess = (response: GuestResponse) => {
         setToken(response.access_token);
-        setPlayer({
-            id: response.player_id,
-            player_type: 'guest',
-            display_name: response.display_name
-        });
-        localStorage.setItem('token', response.access_token);
-    };
-
-    // Function to validate and parse token
-    const validateToken = (token: string) => {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.player_id && payload.player_type && payload.display_name) {
-                setPlayer({
-                    id: parseInt(payload.player_id),
-                    player_type: payload.player_type,
-                    display_name: payload.display_name
-                });
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error('Error parsing token:', error);
-            return false;
-        }
     };
 
     useEffect(() => {
@@ -112,14 +105,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsLoading(true);
             
             if (token) {
-                // Token exists, validate it
-                const isValid = validateToken(token);
-                if (!isValid) {
+                // Token exists, validate it by parsing
+                const playerData = parsePlayerFromToken(token);
+                if (!playerData) {
                     // Invalid token, remove it and create guest session
-                    localStorage.removeItem('token');
                     setToken(null);
-                    setPlayer(null);
                     await createGuestSession();
+                } else {
+                    // Valid token, set player data
+                    setPlayer(playerData);
                 }
             } else {
                 // No token exists, create a guest session
@@ -132,11 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initializeAuth();
     }, []); // Only run on mount
 
+    // Update player data when token changes
     useEffect(() => {
         if (token) {
-            localStorage.setItem('token', token);
+            const playerData = parsePlayerFromToken(token);
+            setPlayer(playerData);
         } else {
-            localStorage.removeItem('token');
             setPlayer(null);
         }
     }, [token]);
@@ -146,21 +141,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const handleUserTokenExpired = () => {
             console.log('AuthContext: User token expired, updating state');
             setToken(null);
-            setPlayer(null);
+        };
+
+        const handleTokenUpdated = (event: CustomEvent) => {
+            console.log('AuthContext: Token updated by axios interceptor');
+            setToken(event.detail.token);
         };
 
         window.addEventListener('userTokenExpired', handleUserTokenExpired);
+        window.addEventListener('tokenUpdated', handleTokenUpdated as EventListener);
         
         return () => {
             window.removeEventListener('userTokenExpired', handleUserTokenExpired);
+            window.removeEventListener('tokenUpdated', handleTokenUpdated as EventListener);
         };
     }, []);
 
     const logout = async () => {
         // Clear current player data
         setToken(null);
-        setPlayer(null);
-        localStorage.removeItem('token');
 
         // Create new guest session
         try {
@@ -176,7 +175,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             player,
             isLoading,
             setToken,
-            setPlayer,
             handleLoginSuccess,
             handleVerifyEmailSuccess,
             handleGuestSuccess,

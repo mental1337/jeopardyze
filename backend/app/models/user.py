@@ -10,6 +10,7 @@ class User(MyBaseModel):
     password_hash = Column(String(255), nullable=True)  # Nullable for guest users
     is_verified = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    verification_code = Column(String(6), nullable=True)  # 6-digit verification code
 
     # Relationships
     player_profile = relationship("Player", back_populates="user", uselist=False)

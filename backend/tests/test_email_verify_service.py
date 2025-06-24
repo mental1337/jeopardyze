@@ -2,15 +2,16 @@ import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
 import requests
+from sqlalchemy.orm import Session
 
 from app.services.email_verify_service import (
     generate_verification_code,
     store_verification_code,
     verify_code,
     send_email,
-    send_verification_email,
-    verification_codes
+    send_verification_email
 )
+from app.models.user import User
 
 def test_generate_verification_code():
     """Test that verification code is generated correctly."""
@@ -19,63 +20,97 @@ def test_generate_verification_code():
     assert len(code) == 6
     assert code.isdigit()
 
-def test_store_verification_code():
-    """Test storing verification code with expiration."""
+def test_store_verification_code(db: Session):
+    """Test storing verification code in database."""
+    # Create a test user
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False
+    )
+    db.add(user)
+    db.commit()
+    
     email = "test@example.com"
     code = "123456"
     
-    store_verification_code(email, code)
-    print("Stored code: ", verification_codes)
-    assert email in verification_codes
-    assert verification_codes[email]['code'] == code
-    assert isinstance(verification_codes[email]['expires_at'], datetime)
+    store_verification_code(db, email, code)
+    
+    # Verify the code was stored
+    db.refresh(user)
+    assert user.verification_code == code
 
-def test_verify_code_valid():
+def test_store_verification_code_user_not_found(db: Session):
+    """Test storing verification code for non-existent user."""
+    email = "nonexistent@example.com"
+    code = "123456"
+    
+    with pytest.raises(ValueError, match=f"User with email {email} not found"):
+        store_verification_code(db, email, code)
+
+def test_verify_code_valid(db: Session):
     """Test verification of a valid code."""
+    # Create a test user with verification code
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False,
+        verification_code="123456"
+    )
+    db.add(user)
+    db.commit()
+    
     email = "test@example.com"
     code = "123456"
     
-    # Store a code that hasn't expired
-    verification_codes[email] = {
-        'code': code,
-        'expires_at': datetime.now(timezone.utc) + timedelta(minutes=15)
-    }
+    assert verify_code(db, email, code) is True
     
-    assert verify_code(email, code) is True
-    assert email not in verification_codes  # Code should be removed after verification
+    # Verify the code was cleared after successful verification
+    db.refresh(user)
+    assert user.verification_code is None
 
-def test_verify_code_invalid():
+def test_verify_code_invalid(db: Session):
     """Test verification of an invalid code."""
+    # Create a test user with verification code
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False,
+        verification_code="123456"
+    )
+    db.add(user)
+    db.commit()
+    
     email = "test@example.com"
-    code = "123456"
     wrong_code = "654321"
     
-    # Store a code that hasn't expired
-    verification_codes[email] = {
-        'code': code,
-        'expires_at': datetime.now(timezone.utc) + timedelta(minutes=15)
-    }
+    assert verify_code(db, email, wrong_code) is False
     
-    assert verify_code(email, wrong_code) is False
-    assert email in verification_codes  # Code should remain if verification fails
+    # Verify the code was not cleared after failed verification
+    db.refresh(user)
+    assert user.verification_code == "123456"
 
-def test_verify_code_expired():
-    """Test verification of an expired code."""
-    email = "test@example.com"
-    code = "123456"
-    
-    # Store an expired code
-    verification_codes[email] = {
-        'code': code,
-        'expires_at': datetime.now(timezone.utc) - timedelta(minutes=1)
-    }
-    
-    assert verify_code(email, code) is False
-    assert email not in verification_codes  # Expired code should be removed
-
-def test_verify_code_nonexistent_email():
+def test_verify_code_nonexistent_email(db: Session):
     """Test verification for non-existent email."""
-    assert verify_code("nonexistent@example.com", "123456") is False
+    assert verify_code(db, "nonexistent@example.com", "123456") is False
+
+def test_verify_code_no_verification_code(db: Session):
+    """Test verification for user without verification code."""
+    # Create a test user without verification code
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False,
+        verification_code=None
+    )
+    db.add(user)
+    db.commit()
+    
+    assert verify_code(db, "test@example.com", "123456") is False
 
 @patch('app.services.email_verify_service.requests.post')
 def test_send_email_success(mock_post):
@@ -107,16 +142,30 @@ def test_send_email_failure(mock_post):
     assert result is False
 
 @patch('app.services.email_verify_service.send_email')
-def test_send_verification_email(mock_send_email):
+def test_send_verification_email(db: Session, mock_send_email):
     """Test sending verification email."""
+    # Create a test user
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False
+    )
+    db.add(user)
+    db.commit()
+    
     email = "test@example.com"
     mock_send_email.return_value = True
     
-    code = send_verification_email(email)
+    code = send_verification_email(db, email)
     
     assert len(code) == 6
     assert code.isdigit()
-    assert email in verification_codes
+    
+    # Verify the code was stored in the database
+    db.refresh(user)
+    assert user.verification_code == code
+    
     mock_send_email.assert_called_once()
     
     # Verify email content
@@ -126,14 +175,28 @@ def test_send_verification_email(mock_send_email):
     assert code in call_args['html_content']
 
 @patch('app.services.email_verify_service.send_email')
-def test_send_verification_email_failure(mock_send_email):
+def test_send_verification_email_failure(db: Session, mock_send_email):
     """Test failed verification email sending."""
+    # Create a test user
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password_hash="hashed_password",
+        is_verified=False
+    )
+    db.add(user)
+    db.commit()
+    
     email = "test@example.com"
     mock_send_email.return_value = False
     
-    code = send_verification_email(email)
+    code = send_verification_email(db, email)
     
     assert len(code) == 6
     assert code.isdigit()
-    assert email in verification_codes
+    
+    # Verify the code was still stored in the database even if email failed
+    db.refresh(user)
+    assert user.verification_code == code
+    
     mock_send_email.assert_called_once() 

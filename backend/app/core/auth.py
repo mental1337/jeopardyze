@@ -21,25 +21,21 @@ async def get_current_player(
     Get the current authenticated player from the JWT token.
     """
     logger.info(f"Getting current player from credentials: {credentials}")
-    if not credentials:
-        logger.info("No credentials provided")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No authentication token provided",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
     try:
+        if not credentials:
+            logger.info("No credentials provided")
+            raise Exception("No authentication token provided")
+        
         return get_current_player_from_token(credentials.credentials, db)
-    except JWTError as e:
-        logger.error("JWT Error while parsing token. Invalid token. Exception: %s", e)
+    except Exception as e:
+        logger.error("Invalid authentication token. Exception: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token",
+            detail="Invalid authentication token",  # This message is important; it is used by the frontend axios intercepter.
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-async def get_current_user(
+async def get_current_logged_in_user(
     current_player: Player = Depends(get_current_player),
     db: Session = Depends(get_db)
 ) -> User:
@@ -50,7 +46,7 @@ async def get_current_user(
     if current_player.player_type.value != "user":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required - guest users not allowed",
+            detail="Must be logged in - guest users not allowed",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

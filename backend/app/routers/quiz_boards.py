@@ -3,9 +3,8 @@ from fastapi import APIRouter, Depends, Form, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedEntity, get_user_id, get_current_logged_in_user
-from app.core.logging import logger
-from app.models import QuizBoard, User
+from app.core.auth import get_current_player
+from app.models import QuizBoard, Player
 from app.schemas import QuizBoardPydanticModel, TopQuizBoardsResponse, QuizBoardPydanticModel
 from app.services.quiz_board_service import QuizBoardService
 from app.services.game_sessions_service import GameSessionsService
@@ -35,11 +34,11 @@ async def get_all_quiz_boards(db: Session = Depends(get_db), search: Optional[st
 async def create_quiz_board_from_topic(
     topic: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_logged_in_user)
+    current_player: Player = Depends(get_current_player)
 ) -> Dict:
     # Only users can create quiz boards, not guests
-    quiz_board = QuizBoardService.create_from_topic(topic, current_user.id, db)
-    game_session = GameSessionsService.create_from_quiz_board(quiz_board, current_user.id, None, db)
+    quiz_board = QuizBoardService.create_from_topic(topic, current_player.id, db)
+    game_session = GameSessionsService.create_from_quiz_board(quiz_board, current_player, db)
     
     return {
         "game_session_id": game_session.id

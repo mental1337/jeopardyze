@@ -13,7 +13,8 @@ class Player(MyBaseModel):
     player_type = Column(Enum(PlayerType), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     guest_id = Column(Integer, ForeignKey("guests.id"), nullable=True)
-    
+    display_name = Column(String, nullable=False)
+
     # Relationships
     user = relationship("User", back_populates="player_profile")
     guest = relationship("Guest", back_populates="player_profile")
@@ -26,11 +27,3 @@ class Player(MyBaseModel):
         else:
             return f"<Player(id={self.id}, type=guest, guest_id={self.guest_id})>"
     
-    @property
-    def display_name(self):
-        """Get the display name of the player"""
-        if self.player_type == PlayerType.USER and self.user:
-            return self.user.username
-        elif self.player_type == PlayerType.GUEST and self.guest:
-            return self.guest.guest_name
-        return "Unknown Player" 

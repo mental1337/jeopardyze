@@ -28,15 +28,13 @@ async def create_guest_endpoint(
     player = create_guest(db)
     return GuestResponse(
         access_token=create_player_token(player),
-        player_id=player.id,
-        display_name=player.display_name
     )
 
 @router.post("/register", response_model=RegisterResponse)
 async def register(
     request: RegisterRequest,
     db: Session = Depends(get_db)
-) -> RegisterResponse:
+) -> LoginResponse:
     # Check if username already exists
     existing_user = db.query(User).filter(User.username == request.username).first()
     if existing_user:
@@ -66,18 +64,19 @@ async def register(
     # Create player profile for the user
     player = Player(
         player_type=PlayerType.USER,
-        user_id=user.id
+        user_id=user.id,
+        display_name=user.username
     )
     db.add(player)
     db.commit()
     
     # Send verification email
-    send_verification_email(request.email)
+    send_verification_email(db, request.email)
     
-    return RegisterResponse(
-        message="Verification code sent to email",
-        email=request.email
-    )
+    token = create_player_token(player)
+    return LoginResponse(
+        access_token=token,
+    ) 
 
 @router.post("/verify-email", response_model=VerifyEmailResponse)
 async def verify_email(
@@ -88,32 +87,23 @@ async def verify_email(
     user = db.query(User).filter(User.email == request.email).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="User not found"
         )
     
     # Verify the code
-    if not verify_code(request.email, request.code):
+    if not verify_code(db, request.email, request.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification code"
+            detail="Invalid verification code"
         )
     
     # Mark user as verified
     user.is_verified = True
-    
-    # Ensure player record exists
-    player = ensure_player_exists(db, user)
-    
     db.commit()
     
-    access_token = create_player_token(player)
-    
     return VerifyEmailResponse(
-        access_token=access_token,
-        token_type="bearer",
-        player_id=player.id,
-        display_name=player.display_name
+        message="Email verified successfully"
     )
 
 @router.post("/login", response_model=LoginResponse)
@@ -134,7 +124,4 @@ async def login(
 
     return LoginResponse(
         access_token=token,
-        token_type="bearer",
-        player_id=player.id,
-        display_name=player.display_name
     ) 
