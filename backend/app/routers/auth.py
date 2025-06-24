@@ -30,7 +30,7 @@ async def create_guest_endpoint(
         access_token=create_player_token(player),
     )
 
-@router.post("/register", response_model=RegisterResponse)
+@router.post("/register", response_model=LoginResponse)
 async def register(
     request: RegisterRequest,
     db: Session = Depends(get_db)
@@ -76,6 +76,7 @@ async def register(
     token = create_player_token(player)
     return LoginResponse(
         access_token=token,
+        is_verified=user.is_verified
     ) 
 
 @router.post("/verify-email", response_model=VerifyEmailResponse)
@@ -102,8 +103,14 @@ async def verify_email(
     user.is_verified = True
     db.commit()
     
+    # Create new token for verified user
+    player = ensure_player_exists(db, user)
+    token = create_player_token(player)
+    
     return VerifyEmailResponse(
-        message="Email verified successfully"
+        message="Email verified successfully",
+        is_verified=user.is_verified,
+        access_token=token
     )
 
 @router.post("/login", response_model=LoginResponse)
@@ -124,4 +131,5 @@ async def login(
 
     return LoginResponse(
         access_token=token,
+        is_verified=user.is_verified
     ) 

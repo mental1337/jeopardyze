@@ -54,12 +54,19 @@ def create_access_token(data: dict, expire_minutes: int) -> str:
     return encoded_jwt
 
 def create_player_token(player: Player) -> str:
+    token_data = {
+        "player_id": str(player.id),
+        "player_type": player.player_type.value,
+        "display_name": player.display_name,
+    }
+    
+    # Add email and verification status for user players
+    if player.player_type == PlayerType.USER and player.user:
+        token_data["email"] = player.user.email
+        token_data["is_verified"] = player.user.is_verified
+    
     return create_access_token(
-        data={
-            "player_id": str(player.id),
-            "player_type": player.player_type.value,
-            "display_name": player.display_name
-        },
+        data=token_data,
         expire_minutes=60*24*30 # 30 days
     )
 

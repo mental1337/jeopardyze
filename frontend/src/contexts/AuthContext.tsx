@@ -6,6 +6,8 @@ interface Player {
     id: number;
     player_type: 'user' | 'guest';
     display_name: string;
+    email?: string; // Optional since guest players don't have email
+    is_verified?: boolean; // Optional since guest players don't have this field
 }
 
 interface AuthContextType {
@@ -30,7 +32,9 @@ const parsePlayerFromToken = (token: string): Player | null => {
             const player = {
                 id: parseInt(payload.player_id),
                 player_type: payload.player_type,
-                display_name: payload.display_name
+                display_name: payload.display_name,
+                email: payload.email, // Extract email if present
+                is_verified: payload.is_verified // Extract verification status if present
             };
             console.log('Extracted player data:', player);
             return player;

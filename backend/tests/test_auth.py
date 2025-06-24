@@ -135,6 +135,8 @@ def test_verify_email_success(client: TestClient, db: Session):
     assert response.status_code == 200
     data = response.json()
     assert data["message"] == "Email verified successfully"
+    assert data["is_verified"] == True
+    assert "access_token" in data
     
     # Verify user is now verified
     db.refresh(user)

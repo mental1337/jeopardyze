@@ -4,6 +4,11 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface LoginResponse {
+    access_token: string;
+}
+
+
 export interface RegisterRequest {
     username: string;
     email: string;
@@ -11,22 +16,16 @@ export interface RegisterRequest {
     guest_id?: string;
 }
 
+export type RegisterResponse = LoginResponse
+
 export interface VerifyEmailRequest {
     email: string;
     code: string;
 }
 
-// Response types
-export interface LoginResponse {
-    access_token: string;
-}
-
-export interface RegisterResponse {
-    message: string;
-    email: string;
-}
 
 export interface VerifyEmailResponse {
+    message: string;
     access_token: string;
 }
 

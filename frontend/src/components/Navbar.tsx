@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SigninBar from "./SigninBar";
 import SignupBar from "./SignupBar";
+import EmailVerificationBar from "./EmailVerificationBar";
 import { useAuth } from "../contexts/AuthContext";
-import { RegisterResponse } from "../types/auth_types";
-
 
 export default function Navbar() {
     const [showSignin, setShowSignin] = useState(false);
     const [showSignup, setShowSignup] = useState(false);
-    const { player, isLoading, handleLoginSuccess, logout } = useAuth();
+    const [showEmailVerification, setShowEmailVerification] = useState(false);
+    const { player, isLoading, handleLoginSuccess, handleVerifyEmailSuccess, logout } = useAuth();
     
     // Listen for user token expiration events
     useEffect(() => {
@@ -18,6 +18,7 @@ export default function Navbar() {
             console.log('User token expired event received, showing login modal');
             setShowSignin(true);
             setShowSignup(false);
+            setShowEmailVerification(false);
         };
 
         window.addEventListener('userTokenExpired', handleUserTokenExpired);
@@ -27,11 +28,17 @@ export default function Navbar() {
         };
     }, []);
     
-    // Handle successful registration (just close the form)
-    const handleRegisterSuccess = (response: RegisterResponse) => {
-        setShowSignup(false);
-        // User will need to verify email before they can log in
-    };
+
+    // Show email verification bar when player is logged in but not verified
+    useEffect(() => {
+        if (player?.player_type === 'user' && player.email && player.is_verified === false) {
+            setShowEmailVerification(true);
+        }
+        else {
+            setShowEmailVerification(false);
+        }
+    }, [player]);
+
     
     // Don't show auth state while loading
     if (isLoading) {
@@ -99,7 +106,14 @@ export default function Navbar() {
             </Flex>
             
             {showSignin && <SigninBar onClose={() => setShowSignin(false)} onLoginSuccess={handleLoginSuccess}/>}
-            {showSignup && <SignupBar onClose={() => setShowSignup(false)} onRegisterSuccess={handleRegisterSuccess}/>}
+            {showSignup && <SignupBar onClose={() => setShowSignup(false)} onRegisterSuccess={handleLoginSuccess}/>}
+            {showEmailVerification && (
+                <EmailVerificationBar 
+                    email={player?.email || ''}
+                    onVerificationSuccess={handleVerifyEmailSuccess}
+                    onClose={() => setShowEmailVerification(false)}
+                />
+            )}
         </Box>
     );
 }
