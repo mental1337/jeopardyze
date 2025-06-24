@@ -20,9 +20,8 @@ export interface VerifyEmailRequest {
 export interface LoginResponse {
     access_token: string;
     token_type: string;
-    user_id: number;
-    username: string;
-    email: string;
+    player_id: number;
+    display_name: string;
 }
 
 export interface RegisterResponse {
@@ -33,11 +32,12 @@ export interface RegisterResponse {
 export interface VerifyEmailResponse {
     access_token: string;
     token_type: string;
-    user_id: number;
-    username: string;
-    email: string;
+    player_id: number;
+    display_name: string;
 }
 
 export interface GuestResponse {
     access_token: string;
+    player_id: number;
+    display_name: string;
 } 

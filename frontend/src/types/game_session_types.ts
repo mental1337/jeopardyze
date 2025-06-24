@@ -29,7 +29,7 @@ interface QuizBoard {
 // This should match GameSessionResponse
 interface GameSessionResponse {
     id: number;
-    user_id: number;
+    player_id: number;
     score: number;
     started_at: string;
     completed_at: string | null;

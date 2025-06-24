@@ -40,9 +40,10 @@ erDiagram
     QuizBoard ||--o{ Category : contains
     Category ||--o{ Question : contains
     QuizBoard ||--o{ GameSession : played_in
-    User ||--o{ GameSession : plays
+    Player ||--o{ GameSession : plays
     GameSession ||--o{ QuestionAttempt : tracks
-    Guest ||--o{ GameSession : plays
+    User ||--|| Player : has_profile
+    Guest ||--|| Player : has_profile
 
     QuizBoard {
         int id PK
@@ -66,11 +67,17 @@ erDiagram
         int points
     }
 
+    Player {
+        int id PK
+        enum player_type
+        int user_id FK
+        int guest_id FK
+    }
+
     GameSession {
         int id PK
         int quiz_board_id FK
-        int user_id FK
-        int guest_id FK
+        int player_id FK
         int total_score
         datetime started_at
         datetime completed_at
@@ -209,25 +216,25 @@ erDiagram
     ```
 
 #### Authentication
-- `POST /api/auth/guest-session`
-  - Creates a new guest session
+- `POST /api/auth/guest`
+  - Creates a new guest session and player profile
   - Returns:
     ```json
     {
-        "token": "string",  # JWT token for guest
-        "expires_at": "datetime"
+        "access_token": "string",  # JWT token containing player_id, display_name, player_type
+        "player_id": "string",
+        "display_name": "string"
     }
     ```
 
 - `POST /api/auth/register`
-  - Register new user
+  - Register new user and create player profile
   - Request:
     ```json
     {
         "username": "string",
         "email": "string",
-        "password": "string",
-        "guest_id": "string"  # Optional
+        "password": "string"
     }
     ```
   - Response:
@@ -250,12 +257,10 @@ erDiagram
   - Response:
     ```json
     {
-        "token": "string",  # JWT token
-        "user": {
-            "id": "number",
-            "username": "string",
-            "email": "string"
-        }
+        "access_token": "string",  # JWT token containing player_id, display_name, player_type
+        "token_type": "bearer",
+        "player_id": "string",
+        "display_name": "string"
     }
     ```
 
@@ -271,12 +276,10 @@ erDiagram
   - Response:
     ```json
     {
-        "token": "string",  # JWT token
-        "user": {
-            "id": "number",
-            "username": "string",
-            "email": "string"
-        }
+        "access_token": "string",  # JWT token containing player_id, display_name, player_type
+        "token_type": "bearer",
+        "player_id": "string",
+        "display_name": "string"
     }
     ```
 
@@ -433,8 +436,8 @@ POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
    ```
    / (Home page)
    ↓ (Start playing)
-   POST /api/auth/guest-session
-   ↓ (Success - returns guest token)
+   POST /api/auth/guest
+   ↓ (Success - returns player token with player_id, display_name, player_type)
    /play/:gameSessionId
    ↓ (During gameplay)
    LoginBar shows "Signup to save progress"
@@ -444,7 +447,7 @@ POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
    POST /api/auth/register
    ↓ (Enter verification code)
    POST /api/auth/verify-email
-   ↓ (Success - returns user token)
+   ↓ (Success - returns player token with player_id, display_name, player_type)
    Guest session converted to user session
    ```
 
@@ -455,7 +458,7 @@ POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
    AuthModal opens
    ↓ (Enter username/email & password)
    POST /api/auth/login
-   ↓ (Success - returns user token)
+   ↓ (Success - returns player token with player_id, display_name, player_type)
    / (Home page, logged in)
    ```
 
@@ -463,7 +466,7 @@ POST /api/game-sessions/:gameSessionId/questions/:questionId/answer
 ```
 /login or /register
 ↓ (Submit credentials)
-POST /api/users/login or /api/users/register
+POST /api/auth/login or /api/auth/register
 ↓ (Success)
 /
 ```
@@ -533,7 +536,11 @@ graph TD
   - Current score
   - Game progress
   - Game status (in_progress/completed)
-- User authentication state
+- Player authentication state:
+  - player_id
+  - player_type (user|guest)
+  - display_name
+  - access_token
 - UI state (modals, loading states)
 
 #### Game Session State Example
@@ -606,29 +613,18 @@ graph TD
 - Session management
 
 #### JWT Token Structure
-1. Guest Token:
+1. Unified Player Token (for both guests and users):
    ```json
    {
-       "sub": "guest",
-       "session_id": "string",
-       "exp": "number"
-   }
-   ```
-
-2. User Token:
-   ```json
-   {
-       "sub": "user",
-       "user_id": "number",
-       "username": "string",
-       "email": "string",
+       "player_id": "string",
+       "player_type": "user|guest",
+       "display_name": "string",
        "exp": "number"
    }
    ```
 
 #### Token Management
-- Guest tokens expire after 24 hours
-- User tokens expire after 24 hours
+- Player tokens expire after 30 days
 - Email verification codes expire after 15 minutes
 - Tokens stored in localStorage
 - Automatic token refresh mechanism

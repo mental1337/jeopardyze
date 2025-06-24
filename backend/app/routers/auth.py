@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.services.auth_service import create_access_token, authenticate_user, create_guest_session, get_password_hash, create_user_access_token
+from app.services.auth_service import create_player_token, authenticate_user, create_guest, get_password_hash, ensure_player_exists
 from app.services.email_verify_service import verify_code, send_verification_email
 from app.models.user import User
+from app.models.player import Player, PlayerType
 from app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     VerifyEmailRequest,
-    UserResponse,
     LoginResponse,
     RegisterResponse,
     VerifyEmailResponse,
@@ -21,13 +21,15 @@ router = APIRouter(
     tags=["auth"]
 )
 
-@router.post("/guest-session", response_model=GuestResponse)
-async def create_guest_session_endpoint(
+@router.post("/guest", response_model=GuestResponse)
+async def create_guest_endpoint(
     db: Session = Depends(get_db)
 ) -> GuestResponse:
-    token = create_guest_session(db)
+    player = create_guest(db)
     return GuestResponse(
-        access_token=token
+        access_token=create_player_token(player),
+        player_id=player.id,
+        display_name=player.display_name
     )
 
 @router.post("/register", response_model=RegisterResponse)
@@ -59,6 +61,14 @@ async def register(
         is_verified=False
     )
     db.add(user)
+    db.flush()  # Flush to get the user ID
+    
+    # Create player profile for the user
+    player = Player(
+        player_type=PlayerType.USER,
+        user_id=user.id
+    )
+    db.add(player)
     db.commit()
     
     # Send verification email
@@ -91,17 +101,19 @@ async def verify_email(
     
     # Mark user as verified
     user.is_verified = True
+    
+    # Ensure player record exists
+    player = ensure_player_exists(db, user)
+    
     db.commit()
     
-    # Create access token using the new function
-    access_token = create_user_access_token(user)
+    access_token = create_player_token(player)
     
     return VerifyEmailResponse(
         access_token=access_token,
         token_type="bearer",
-        user_id=user.id,
-        username=user.username,
-        email=user.email
+        player_id=player.id,
+        display_name=player.display_name
     )
 
 @router.post("/login", response_model=LoginResponse)
@@ -117,13 +129,12 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token using the new function
-    token = create_user_access_token(user)
-    
+    player = ensure_player_exists(db, user)
+    token = create_player_token(player)
+
     return LoginResponse(
         access_token=token,
         token_type="bearer",
-        user_id=user.id,
-        username=user.username,
-        email=user.email
+        player_id=player.id,
+        display_name=player.display_name
     ) 

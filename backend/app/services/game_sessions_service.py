@@ -1,30 +1,17 @@
 from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional, Union
-# from app.models.game_session import GameSession
-from app.models import GameSession, Question, QuestionAttempt, User, QuizBoard, Guest
+from typing import Optional
+from app.models import GameSession, Question, QuestionAttempt, Player, QuizBoard
 from app.schemas import GameSessionResponse, SessionQuizBoardPyd, SessionCategoryPyd, SessionQuestionPyd, AnswerQuestionResponse
 from app.core.logging import logger
 from fuzzywuzzy import fuzz
 
-# Type alias for authenticated entities
-AuthenticatedEntity = Union[User, Guest]
-
 class GameSessionsService:
     @staticmethod
-    def create_from_quiz_board(quiz_board: QuizBoard, user_id: Optional[int] = None, guest_id: Optional[int] = None, db: Session = None) -> GameSession:        
-        # Validate that at least one of user_id or guest_id is provided
-        if user_id is None and guest_id is None:
-            raise HTTPException(status_code=400, detail="Either user_id or guest_id must be provided")
-        
-        # Validate that not both user_id and guest_id are provided
-        if user_id is not None and guest_id is not None:
-            raise HTTPException(status_code=400, detail="Cannot provide both user_id and guest_id")
-        
+    def create_from_quiz_board(quiz_board: QuizBoard, player: Player, db: Session = None) -> GameSession:        
         game_session = GameSession(
-            user_id=user_id,
-            guest_id=guest_id,
+            player_id=player.id,
             quiz_board_id=quiz_board.id
         )
         db.add(game_session)
@@ -63,12 +50,10 @@ class GameSessionsService:
                 session_category.questions.append(session_question)
             session_quiz_board.categories.append(session_category)
 
-
         # Create the response object with explicit field mapping
         game_session_response = GameSessionResponse(
             id=game_session.id,
-            user_id=game_session.user_id,
-            guest_id=game_session.guest_id,
+            player_id=game_session.player_id,
             score=game_session.score,
             started_at=game_session.started_at,
             completed_at=game_session.completed_at,
@@ -79,18 +64,14 @@ class GameSessionsService:
         return game_session_response
 
     @staticmethod
-    def answer_question(game_session_id: int, question_id: int, user_answer: str, db: Session, current_user: AuthenticatedEntity) -> AnswerQuestionResponse:
+    def answer_question(game_session_id: int, question_id: int, user_answer: str, db: Session, current_player: Player) -> AnswerQuestionResponse:
         game_session = db.query(GameSession).filter(GameSession.id == game_session_id).first()
         if not game_session:
             raise HTTPException(status_code=404, detail="Game session not found")
 
-        # Verify that the current user/guest owns this game session
-        if isinstance(current_user, User):
-            if game_session.user_id != current_user.id:
-                raise HTTPException(status_code=403, detail="Not authorized to access this game session")
-        elif isinstance(current_user, Guest):
-            if game_session.guest_id != current_user.id:
-                raise HTTPException(status_code=403, detail="Not authorized to access this game session")
+        # Verify that the current player owns this game session
+        if game_session.player_id != current_player.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this game session")
 
         question = db.query(Question).filter(Question.id == question_id).first()
         if not question:

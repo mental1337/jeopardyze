@@ -23,9 +23,8 @@ class UserResponse(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
-    user_id: int
-    username: str
-    email: str
+    player_id: int
+    display_name: str
 
 class RegisterResponse(BaseModel):
     message: str
@@ -34,9 +33,10 @@ class RegisterResponse(BaseModel):
 class VerifyEmailResponse(BaseModel):
     access_token: str
     token_type: str
-    user_id: int
-    username: str
-    email: str
+    player_id: int
+    display_name: str
 
 class GuestResponse(BaseModel):
     access_token: str 
+    player_id: int
+    display_name: str

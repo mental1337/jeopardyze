@@ -63,10 +63,6 @@ export default function QuestionModal({ isOpen, onClose, question, gameSessionId
             //     isClosable: true,
             // });
 
-            // Close the modal in 3 seconds
-            setTimeout(() => {
-                onClose();
-            }, 3000);
         } catch (error) {
             toast({
                 title: 'Error',

@@ -1,4 +1,4 @@
-import { Box, Text, Flex, Heading, HStack, Spacer, Link as ChakraLink, Menu, MenuButton, MenuList, MenuItem, Button } from "@chakra-ui/react";
+import { Box, Text, Flex, HStack, Spacer, Link as ChakraLink, Menu, MenuButton, MenuList, MenuItem } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SigninBar from "./SigninBar";
@@ -10,7 +10,7 @@ import { RegisterResponse } from "../types/auth_types";
 export default function Navbar() {
     const [showSignin, setShowSignin] = useState(false);
     const [showSignup, setShowSignup] = useState(false);
-    const { token, isGuest, user, isLoading, guestId, handleLoginSuccess, handleVerifyEmailSuccess, logout } = useAuth();
+    const { player, isLoading, handleLoginSuccess, logout } = useAuth();
     
     // Listen for user token expiration events
     useEffect(() => {
@@ -49,10 +49,8 @@ export default function Navbar() {
         );
     }
 
-    const isLoggedIn = !isGuest && user !== null;
-    
-    // Determine the name to display
-    const displayName = isLoggedIn ? user?.username : `Stranger-${guestId}`;
+    const isLoggedIn = player?.player_type === 'user';
+    const displayName = player?.display_name || 'Stranger';
 
     return (
         <Box bg="gray.300" borderRadius={10}>
@@ -101,13 +99,13 @@ export default function Navbar() {
             </Flex>
             
             {showSignin && <SigninBar onClose={() => setShowSignin(false)} onLoginSuccess={handleLoginSuccess}/>}
-            {showSignup && <SignupBar onClose={() => setShowSignup(false)} guestId={guestId?.toString()} onRegisterSuccess={handleRegisterSuccess}/>}
+            {showSignup && <SignupBar onClose={() => setShowSignup(false)} onRegisterSuccess={handleRegisterSuccess}/>}
         </Box>
     );
 }
 
 // Local component for the user menu dropdown
-function UserMenu({ username, onSignOut }: { username: string; onSignOut: () => Promise<void> }) {
+function UserMenu({ username, onSignOut }: { username: string; onSignOut: () => void }) {
     const handleSignOut = async () => {
         try {
             await onSignOut();

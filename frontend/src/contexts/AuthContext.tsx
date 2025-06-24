@@ -2,24 +2,21 @@ import { LoginResponse, GuestResponse, VerifyEmailResponse } from '../types/auth
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import api from '../lib/axios';
 
-interface User {
+interface Player {
     id: number;
-    username: string;
-    email: string;
+    player_type: 'user' | 'guest';
+    display_name: string;
 }
 
 interface AuthContextType {
     token: string | null;
-    user: User | null;
-    isGuest: boolean;
-    guestId: number | null;
+    player: Player | null;
     isLoading: boolean;
     setToken: (token: string | null) => void;
-    setUser: (user: User | null) => void;
-    setIsGuest: (isGuest: boolean) => void;
-    setGuestId: (guestId: number | null) => void;
+    setPlayer: (player: Player | null) => void;
     handleLoginSuccess: (response: LoginResponse) => void;
     handleVerifyEmailSuccess: (response: VerifyEmailResponse) => void;
+    handleGuestSuccess: (response: GuestResponse) => void;
     logout: () => void;
 }
 
@@ -27,25 +24,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-    const [user, setUser] = useState<User | null>(null);
-    const [isGuest, setIsGuest] = useState<boolean>(false);
-    const [guestId, setGuestId] = useState<number | null>(null);
+    const [player, setPlayer] = useState<Player | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const hasInitialized = useRef(false);
 
     // Function to create a guest session
     const createGuestSession = async () => {
         try {
-            console.log("Creating guest session by calling /auth/guest-session");
-            const { data } = await api.post<GuestResponse>('/auth/guest-session');
+            console.log("Creating guest session by calling /auth/guest");
+            const { data } = await api.post<GuestResponse>('/auth/guest');
             const guestToken = data.access_token;
             setToken(guestToken);
-            setIsGuest(true);
-            setUser(null);
-            
-            // Extract guest ID from the token
-            const payload = JSON.parse(atob(guestToken.split('.')[1]));
-            setGuestId(parseInt(payload.guest_id));
+            setPlayer({
+                id: data.player_id,
+                player_type: 'guest',
+                display_name: data.display_name
+            });
             
             localStorage.setItem('token', guestToken);
             return guestToken;
@@ -58,26 +52,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Function to handle successful login
     const handleLoginSuccess = (response: LoginResponse) => {
         setToken(response.access_token);
-        setUser({
-            id: response.user_id,
-            username: response.username,
-            email: response.email
+        setPlayer({
+            id: response.player_id,
+            player_type: 'user',
+            display_name: response.display_name
         });
-        setIsGuest(false);
-        setGuestId(null);
         localStorage.setItem('token', response.access_token);
     };
 
     // Function to handle successful email verification
     const handleVerifyEmailSuccess = (response: VerifyEmailResponse) => {
         setToken(response.access_token);
-        setUser({
-            id: response.user_id,
-            username: response.username,
-            email: response.email
+        setPlayer({
+            id: response.player_id,
+            player_type: 'user',
+            display_name: response.display_name
         });
-        setIsGuest(false);
-        setGuestId(null);
+        localStorage.setItem('token', response.access_token);
+    };
+
+    // Function to handle successful guest creation
+    const handleGuestSuccess = (response: GuestResponse) => {
+        setToken(response.access_token);
+        setPlayer({
+            id: response.player_id,
+            player_type: 'guest',
+            display_name: response.display_name
+        });
         localStorage.setItem('token', response.access_token);
     };
 
@@ -85,21 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const validateToken = (token: string) => {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.sub === 'guest') {
-                setIsGuest(true);
-                setUser(null);
-                setGuestId(parseInt(payload.guest_id));
-            } else {
-                // This is a user token - extract user info from the token
-                setIsGuest(false);
-                setGuestId(null);
-                setUser({
-                    id: parseInt(payload.sub),
-                    username: payload.username,
-                    email: payload.email
+            if (payload.player_id && payload.player_type && payload.display_name) {
+                setPlayer({
+                    id: parseInt(payload.player_id),
+                    player_type: payload.player_type,
+                    display_name: payload.display_name
                 });
+                return true;
             }
-            return true;
+            return false;
         } catch (error) {
             console.error('Error parsing token:', error);
             return false;
@@ -123,8 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // Invalid token, remove it and create guest session
                     localStorage.removeItem('token');
                     setToken(null);
-                    setGuestId(null);
-                    setUser(null);
+                    setPlayer(null);
                     await createGuestSession();
                 }
             } else {
@@ -143,9 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('token', token);
         } else {
             localStorage.removeItem('token');
-            setIsGuest(false);
-            setUser(null);
-            setGuestId(null);
+            setPlayer(null);
         }
     }, [token]);
 
@@ -154,9 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const handleUserTokenExpired = () => {
             console.log('AuthContext: User token expired, updating state');
             setToken(null);
-            setUser(null);
-            setIsGuest(false);
-            setGuestId(null);
+            setPlayer(null);
         };
 
         window.addEventListener('userTokenExpired', handleUserTokenExpired);
@@ -167,11 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const logout = async () => {
-        // Clear current user data
+        // Clear current player data
         setToken(null);
-        setUser(null);
-        setIsGuest(false);
-        setGuestId(null);
+        setPlayer(null);
         localStorage.removeItem('token');
 
         // Create new guest session
@@ -185,16 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (
         <AuthContext.Provider value={{
             token,
-            user,
-            isGuest,
-            guestId,
+            player,
             isLoading,
             setToken,
-            setUser,
-            setIsGuest,
-            setGuestId,
+            setPlayer,
             handleLoginSuccess,
             handleVerifyEmailSuccess,
+            handleGuestSuccess,
             logout
         }}>
             {children}

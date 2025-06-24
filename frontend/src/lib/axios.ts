@@ -32,7 +32,7 @@ api.interceptors.response.use(
                     if (payload.sub === 'guest') {
                         // Guest token expired - create new guest session
                         console.log('Guest token expired, creating new guest session');
-                        const { data } = await api.post('/auth/guest-session');
+                        const { data } = await api.post('/auth/guest');
                         const newToken = data.access_token;
                         
                         // Update localStorage
