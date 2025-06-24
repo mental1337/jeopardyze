@@ -37,7 +37,7 @@ class QuizBoardPydanticModel(BaseModel):
     title: str
     source_type: str
     source_content: str
-    created_by_user_id: int
+    created_by_player_id: int
     created_at: datetime
     categories: List[CategoryPydanticModel]
 

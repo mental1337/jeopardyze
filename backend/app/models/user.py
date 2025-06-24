@@ -12,8 +12,7 @@ class User(MyBaseModel):
     is_active = Column(Boolean, default=True)
 
     # Relationships
-    quiz_boards = relationship("QuizBoard", back_populates="created_by_user")
-    game_sessions = relationship("GameSession", back_populates="user")
+    player_profile = relationship("Player", back_populates="user", uselist=False)
     guests = relationship("Guest", back_populates="converted_to_user")
     
     def __repr__(self):

@@ -126,7 +126,7 @@ class QuizBoardService:
                     QuizBoard,
                     func.count(GameSession.id).label('total_sessions'),
                     top_scores.c.score.label('top_score'),
-                    User.username.label('top_score_username')
+                    User.username.label('top_scorer')
                 )
                 .outerjoin(GameSession, QuizBoard.id == GameSession.quiz_board_id)
                 .outerjoin(
@@ -147,7 +147,7 @@ class QuizBoardService:
 
             # Convert to response model
             top_quiz_boards = []
-            for quiz_board, total_sessions, top_score, top_username in quiz_boards:
+            for quiz_board, total_sessions, top_score, top_scorer in quiz_boards:
                 top_quiz_boards.append(
                     TopQuizBoardModel(
                         id=quiz_board.id,
@@ -155,7 +155,7 @@ class QuizBoardService:
                         creator=quiz_board.created_by_user.username,
                         total_sessions=total_sessions or 0,
                         top_score=top_score or 0,
-                        top_scorer=top_username or "-",
+                        top_scorer=top_scorer or "-",
                         created_at=quiz_board.created_at
                     )
                 )

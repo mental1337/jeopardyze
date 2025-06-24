@@ -19,6 +19,7 @@ def get_db():
 ### For testing and development
 
 def create_tables():
+    # Note, this does not overwrite existing tables.
     print("Creating tables")
     Base.metadata.create_all(bind=engine)
     print("Tables created")

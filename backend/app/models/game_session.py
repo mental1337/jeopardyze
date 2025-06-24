@@ -7,8 +7,7 @@ class GameSession(MyBaseModel):
     __tablename__ = "game_sessions"
     
     quiz_board_id = Column(Integer, ForeignKey("quiz_boards.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    guest_id = Column(Integer, ForeignKey("guests.id"), nullable=True)
+    player_id = Column(Integer, ForeignKey("players.id"), nullable=False)
     score = Column(Integer, default=0)
     started_at = Column(DateTime, default=datetime.now)
     completed_at = Column(DateTime, nullable=True)
@@ -16,9 +15,15 @@ class GameSession(MyBaseModel):
 
     # Relationships
     quiz_board = relationship("QuizBoard", back_populates="game_sessions")
-    user = relationship("User", back_populates="game_sessions")
-    guest = relationship("Guest", back_populates="game_sessions")
+    player = relationship("Player", back_populates="game_sessions")
     question_attempts = relationship("QuestionAttempt", back_populates="game_session")
     
     def __repr__(self):
-        return f"<GameSession(id={self.id}, quiz_board_id={self.quiz_board_id}, user_id={self.user_id}, guest_id={self.guest_id}, score={self.score}, status={self.status})>"
+        return f"<GameSession(id={self.id}, quiz_board_id={self.quiz_board_id}, player_id={self.player_id}, score={self.score}, status={self.status})>"
+    
+    @property
+    def player_display_name(self):
+        """Get the display name of the player"""
+        if self.player:
+            return self.player.display_name
+        return "Unknown Player"
