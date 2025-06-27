@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: jeopardy-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=sqlite:///./jeopardy.db
+    volumes:
+      - ./backend/jeopardy.db:/app/jeopardy.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build: ./frontend
+    container_name: jeopardy-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped 

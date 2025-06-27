@@ -2,7 +2,7 @@
 
 ## 1. System Overview
 ### 1.1 Purpose
-Jeopardyze is a web application that generates Jeopardy-style quizzes using LLMs. It can create quizzes from uploaded documents, user-provided topics, or daily trending news.
+Jeopardyze is a web application that generates Jeopardy-style quizzes using LLMs. It can create quizzes from any topic, description, document or daily news.
 
 ### 1.2 System Architecture
 ```mermaid
@@ -690,3 +690,6 @@ graph TD
 4. Analytics dashboard
 5. Mobile application
 
+
+# Live deployment:
+http://jeopardyze.xyz

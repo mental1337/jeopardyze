@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Use relative URL for production (will be proxied by nginx)
+// Use localhost for development
+const baseURL = import.meta.env.PROD 
+    ? '/api'  // Production - will be proxied by nginx
+    : 'http://localhost:8000/api';  // Development
+
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api',
+    baseURL: baseURL,
 });
 
 api.interceptors.request.use((config) => {

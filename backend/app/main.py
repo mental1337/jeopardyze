@@ -7,7 +7,10 @@ app = FastAPI(title="Jeopardyze")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173",
+                   "https://jeopardyze.xyz",
+                   "https://www.jeopardyze.xyz"
+                   ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,3 +24,7 @@ app.include_router(auth.router)
 @app.get("/")
 async def root():
     return {"message": "Jeopardyze"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
