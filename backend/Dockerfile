@@ -22,10 +22,6 @@ COPY . .
 COPY run_prod.sh /app/run_prod.sh
 RUN chmod +x /app/run_prod.sh
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
 # Expose port 3001
 EXPOSE 3001
 
