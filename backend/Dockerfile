@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Copy and set permissions for startup script
+COPY run_prod.sh /app/run_prod.sh
+RUN chmod +x /app/run_prod.sh
+
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
@@ -28,10 +32,6 @@ EXPOSE 3001
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3001/health || exit 1
-
-# Copy and set permissions for startup script
-COPY run_prod.sh /app/run_prod.sh
-RUN chmod +x /app/run_prod.sh
 
 # Run the startup script
 CMD ["/app/run_prod.sh"]
