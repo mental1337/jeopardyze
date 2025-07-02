@@ -5,7 +5,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=sqlite:///./jeopardy.db
+      - SQLITE_LOCAL_DSN=${SQLITE_LOCAL_DSN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     volumes:
       - ./backend/jeopardy.db:/app/jeopardy.db
     healthcheck:
@@ -14,6 +17,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
 
   frontend:
     build: ./frontend

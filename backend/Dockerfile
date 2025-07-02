@@ -29,5 +29,9 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3001/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3001"]
+# Copy and set permissions for startup script
+COPY run_prod.sh /app/run_prod.sh
+RUN chmod +x /app/run_prod.sh
+
+# Run the startup script
+CMD ["/app/run_prod.sh"]
